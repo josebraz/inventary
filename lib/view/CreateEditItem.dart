@@ -8,18 +8,18 @@ import 'package:inventary/model/ItemEntity.dart';
 import 'package:inventary/extensions/StateExtension.dart';
 
 class CreateEditItemArgs {
-  final int parentItemId;
-  final ItemEntity item;
+  final int? parentItemId;
+  final ItemEntity? item;
 
   CreateEditItemArgs({this.parentItemId, this.item});
 }
 
 class CreateEditItem extends StatefulWidget {
-  CreateEditItem({Key key, this.title, this.startItem, this.parentId = -1}) : super(key: key);
+  CreateEditItem({Key? key, required this.title, this.startItem, this.parentId = -1}) : super(key: key);
 
   final String title;
   final int parentId;
-  final ItemEntity startItem;
+  final ItemEntity? startItem;
 
   @override
   _CreateEditItemState createState() => _CreateEditItemState(startItem, parentId);
@@ -28,10 +28,10 @@ class CreateEditItem extends StatefulWidget {
 class _CreateEditItemState extends State<CreateEditItem> {
   final _formKey = GlobalKey<FormState>();
 
-  List<String> _imagesList;
-  ItemEntity _item;
+  late List<String?> _imagesList;
+  late ItemEntity _item;
 
-  _CreateEditItemState(ItemEntity startItem, int parentId) {
+  _CreateEditItemState(ItemEntity? startItem, int parentId) {
     this._item = startItem ?? ItemEntity(isFolder: false, parent: parentId);
     this._imagesList = _item.attachmentsPath.map((e) => e).toList();
   }
@@ -77,13 +77,13 @@ class _CreateEditItemState extends State<CreateEditItem> {
                 hintText: 'Qual nome do novo Item?',
                 labelText: 'Nome *',
               ),
-              validator: (String value) {
+              validator: (String? value) {
                 return (value != null && value.isEmpty)
                     ? 'Preencha o campo de nome'
                     : null;
               },
-              onSaved: (String value) {
-                _item.name = value;
+              onSaved: (String? value) {
+                _item.name = value ?? "";
               },
             ),
             SizedBox(height: 5),
@@ -97,11 +97,11 @@ class _CreateEditItemState extends State<CreateEditItem> {
                 hintText: 'Qual descrição do novo Item?',
                 labelText: 'Descrição (opcional)',
               ),
-              validator: (String value) {
+              validator: (String? value) {
                 return null;
               },
-              onSaved: (String value) {
-                _item.description = value;
+              onSaved: (String? value) {
+                _item.description = value ?? "";
               },
             ),
             SizedBox(height: 5),
@@ -115,11 +115,11 @@ class _CreateEditItemState extends State<CreateEditItem> {
                 hintText: 'Qual localização do novo Item?',
                 labelText: 'Localização (opcional)',
               ),
-              validator: (String value) {
+              validator: (String? value) {
                 return null;
               },
-              onSaved: (String value) {
-                _item.location = value;
+              onSaved: (String? value) {
+                _item.location = value ?? "";
               },
             ),
             SizedBox(height: 5),
@@ -133,15 +133,15 @@ class _CreateEditItemState extends State<CreateEditItem> {
                 hintText: 'O item está emprestado para alguém?',
                 labelText: 'Emprestado para (opcional)',
               ),
-              validator: (String value) {
+              validator: (String? value) {
                 return null;
               },
-              onSaved: (String value) {
-                _item.loan = value;
+              onSaved: (String? value) {
+                _item.loan = value ?? "";
               },
             ),
             SizedBox(height: 5),
-            if (_imagesList.length > 0) Image.file(File(_imagesList.first)),
+            if (_imagesList.length > 0) Image.file(File(_imagesList.first!)),
             SizedBox(height: 15),
           ],
         ),
@@ -152,12 +152,12 @@ class _CreateEditItemState extends State<CreateEditItem> {
   void _takePicture() async {
     var imagePath = await Navigator.of(context).pushNamed('/takepicture');
     setState(() {
-      _imagesList.add(imagePath);
+      _imagesList.add(imagePath as String?);
     });
   }
 
   void _save() {
-    final form = _formKey.currentState;
+    final form = _formKey.currentState!;
     if (form.validate()) {
       form.save();
       _item.attachmentsPath = _imagesList;

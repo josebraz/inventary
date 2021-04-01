@@ -6,18 +6,18 @@ import 'package:inventary/model/ItemEntity.dart';
 import 'package:inventary/extensions/StateExtension.dart';
 
 class CreateEditFolderArgs {
-  final int parentItemId;
-  final ItemEntity folder;
+  final int? parentItemId;
+  final ItemEntity? folder;
 
   CreateEditFolderArgs({this.parentItemId, this.folder});
 }
 
 class CreateEditFolder extends StatefulWidget {
-  CreateEditFolder({Key key, this.title, this.startFolder, this.parentId = -1}) : super(key: key);
+  CreateEditFolder({Key? key, required this.title, this.startFolder, this.parentId = -1}) : super(key: key);
 
   final String title;
   final int parentId;
-  final ItemEntity startFolder;
+  final ItemEntity? startFolder;
 
   @override
   _CreateEditFolderState createState() => _CreateEditFolderState(startFolder, parentId);
@@ -26,9 +26,9 @@ class CreateEditFolder extends StatefulWidget {
 class _CreateEditFolderState extends State<CreateEditFolder> {
   final _formKey = GlobalKey<FormState>();
 
-  ItemEntity _item;
+  late ItemEntity _item;
 
-  _CreateEditFolderState(ItemEntity startItem, int parentId) {
+  _CreateEditFolderState(ItemEntity? startItem, int parentId) {
     this._item = startItem ?? ItemEntity(isFolder: true, parent: parentId);
   }
 
@@ -61,19 +61,19 @@ class _CreateEditFolderState extends State<CreateEditFolder> {
                 hintText: 'Qual nome da nova Categoria?',
                 labelText: 'Nome *',
               ),
-              validator: (String value) {
+              validator: (String? value) {
                 return (value != null && value.isEmpty)
                     ? 'Preencha o campo de nome'
                     : null;
               },
-              onSaved: (String value) {
-                _item.name = value;
+              onSaved: (String? value) {
+                _item.name = value ?? "";
               },
             ),
             SizedBox(height: 15),
             ElevatedButton(
               onPressed: () {
-                final form = _formKey.currentState;
+                final form = _formKey.currentState!;
                 if (form.validate()) {
                   form.save();
                   BlocProvider.of<ItemBloc>(context).insert(_item).then((value) {

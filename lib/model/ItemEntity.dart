@@ -12,12 +12,12 @@ class ItemEntity extends BasicEntity {
   String description;
   String loan;
 
-  List<String> attachmentsPath;
+  List<String?> attachmentsPath;
 
   int parent;
   bool isFolder;
 
-  ItemEntity({id, this.name, this.parent = -1, this.isFolder = false, this.location = "", this.description = "", this.loan = "", this.attachmentsPath = const []}) : super(id);
+  ItemEntity({id, this.name = "", this.parent = -1, this.isFolder = false, this.location = "", this.description = "", this.loan = "", this.attachmentsPath = const []}) : super(id);
 
   @override
   Map<String, dynamic> toMap() => {
@@ -48,7 +48,7 @@ class ItemEntity extends BasicEntity {
     return toMap().toString();
   }
 
-  List<String> get images {
+  List<String?> get images {
     return attachmentsPath;
   }
 

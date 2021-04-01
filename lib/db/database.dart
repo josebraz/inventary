@@ -7,7 +7,7 @@ import 'package:sqflite/sqflite.dart';
 
 class AppDatabase {
 
-  Future<Database> db;
+  late Future<Database> db;
 
   static final AppDatabase _singleton = AppDatabase._internal();
 

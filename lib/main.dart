@@ -41,7 +41,7 @@ class MyApp extends StatelessWidget {
         onGenerateRoute: (RouteSettings settings) {
           switch(settings.name) {
             case '/':
-              final int parentItemId = settings.arguments ?? -1;
+              final int parentItemId = settings.arguments as int? ?? -1;
               return MaterialPageRoute(
                 builder: (context) => ItemsList(
                   title: 'Todos os Itens',
@@ -49,23 +49,23 @@ class MyApp extends StatelessWidget {
                 ),
               );
             case '/item':
-              final CreateEditItemArgs args = settings.arguments;
+              final CreateEditItemArgs? args = settings.arguments as CreateEditItemArgs?;
               return MaterialPageRoute(
                 builder: (context) {
                   return CreateEditItem(
-                    title: args.item != null ? 'Editar ${args.item.name}' : 'Criar item',
+                    title: args!.item != null ? 'Editar ${args.item!.name}' : 'Criar item',
                     startItem: args.item,
                     parentId: args.parentItemId ?? -1,
                   );
                 }
               );
             case '/folder':
-              final CreateEditFolderArgs args = settings.arguments;
+              final CreateEditFolderArgs? args = settings.arguments as CreateEditFolderArgs?;
               return MaterialPageRoute(
                 builder: (context) {
                   return CreateEditFolder(
                     title: 'Criar Categoria',
-                    startFolder: args.folder,
+                    startFolder: args!.folder,
                     parentId: args.parentItemId ?? -1,
                   );
                 }

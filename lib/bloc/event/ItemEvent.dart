@@ -19,7 +19,7 @@ class EditItemEvent extends ItemEvent {
 }
 
 class DeleteItemEvent extends ItemEvent {
-  final int deletedItemId;
+  final int? deletedItemId;
   DeleteItemEvent(this.deletedItemId);
 }
 

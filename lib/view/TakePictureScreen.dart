@@ -4,10 +4,10 @@ import 'package:flutter/widgets.dart';
 
 
 class TakePictureScreen extends StatefulWidget {
-  final String title;
+  final String? title;
 
   const TakePictureScreen({
-    Key key,
+    Key? key,
     this.title,
   }) : super(key: key);
 
@@ -16,8 +16,8 @@ class TakePictureScreen extends StatefulWidget {
 }
 
 class TakePictureScreenState extends State<TakePictureScreen> {
-  CameraController _controller;
-  Future<void> _initializeControllerFuture;
+  late CameraController _controller;
+  Future<void>? _initializeControllerFuture;
 
   @override
   void initState() {
@@ -55,7 +55,7 @@ class TakePictureScreenState extends State<TakePictureScreen> {
           try {
             await _initializeControllerFuture;
             final image = await _controller.takePicture();
-            Navigator.of(context).pop(image?.path);
+            Navigator.of(context).pop(image.path);
           } catch (e) {
             print(e);
           }

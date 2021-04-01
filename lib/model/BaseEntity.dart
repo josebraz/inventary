@@ -1,7 +1,7 @@
 
 abstract class BasicEntity<T> {
 
-  int id;
+  int? id;
 
   BasicEntity(this.id);
 

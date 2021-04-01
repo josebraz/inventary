@@ -9,7 +9,7 @@ class ItemSearchBloc extends Bloc<ItemEvent, ItemState> {
   
   final ItemRepository itemRepository;
 
-  ItemSearchBloc(this.itemRepository) : assert(itemRepository != null), super(ItemUninitializedState());
+  ItemSearchBloc(this.itemRepository) : super(ItemUninitializedState());
   
   @override
   void onTransition(Transition<ItemEvent, ItemState> transition) {

@@ -13,7 +13,7 @@ import 'package:inventary/view/CreateEditItem.dart';
 import 'package:inventary/view/ItemsSearshDelegate.dart';
 
 class ItemsList extends StatefulWidget {
-  ItemsList({Key key, this.title, this.parentItemId = -1}) : super(key: key);
+  ItemsList({Key? key, required this.title, this.parentItemId = -1}) : super(key: key);
 
   final String title;
   final int parentItemId;
@@ -74,7 +74,6 @@ class _ItemsListState extends State<ItemsList> {
           ),
         ]
       )
-
     );
   }
 
@@ -83,7 +82,7 @@ class _ItemsListState extends State<ItemsList> {
       child: ListTile(
         leading: item.attachmentsPath.isEmpty
             ? item.isFolder ? Icon(Icons.folder) : Icon(Icons.insert_drive_file_rounded)
-            : Image.file(File(item.attachmentsPath.first)),
+            : Image.file(File(item.attachmentsPath.first!)),
         title: Text(item.name),
         subtitle: Text(item.description.onEmpty("Sem descrição")),
         onTap: () async {

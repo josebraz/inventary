@@ -9,7 +9,7 @@ class ItemBloc extends Bloc<ItemEvent, ItemState> {
   
   final ItemRepository itemRepository;
 
-  ItemBloc(this.itemRepository) : assert(itemRepository != null), super(ItemUninitializedState());
+  ItemBloc(this.itemRepository) : super(ItemUninitializedState());
   
   @override
   void onTransition(Transition<ItemEvent, ItemState> transition) {
