@@ -41,12 +41,8 @@ class MyApp extends StatelessWidget {
         onGenerateRoute: (RouteSettings settings) {
           switch(settings.name) {
             case '/':
-              final int parentItemId = settings.arguments as int? ?? -1;
               return MaterialPageRoute(
-                builder: (context) => ItemsList(
-                  title: 'Todos os Itens',
-                  parentItemId: parentItemId,
-                ),
+                builder: (context) => ItemsList(),
               );
             case '/item':
               final CreateEditItemArgs? args = settings.arguments as CreateEditItemArgs?;

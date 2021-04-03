@@ -56,7 +56,7 @@ class _CreateEditItemState extends State<CreateEditItem> {
       floatingActionButton: FloatingActionButton(
         onPressed: _takePicture,
         tooltip: "Tirar foto",
-        child: Icon(Icons.camera_alt),
+        child: Icon(Icons.add_a_photo),
       ),
     );
   }

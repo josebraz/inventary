@@ -1,12 +1,9 @@
 
 import 'dart:convert';
 
-import 'package:inventary/model/BaseEntity.dart';
+import 'package:inventary/model/BaseItemEntity.dart';
 
-
-class ItemEntity extends BasicEntity {
-
-  String name;
+class ItemEntity extends BasicItemEntity {
 
   String location;
   String description;
@@ -14,10 +11,7 @@ class ItemEntity extends BasicEntity {
 
   List<String?> attachmentsPath;
 
-  int parent;
-  bool isFolder;
-
-  ItemEntity({id, this.name = "", this.parent = -1, this.isFolder = false, this.location = "", this.description = "", this.loan = "", this.attachmentsPath = const []}) : super(id);
+  ItemEntity({id, name = "", parent = -1, isFolder = false, this.location = "", this.description = "", this.loan = "", this.attachmentsPath = const []}) : super(id, name, parent, isFolder);
 
   @override
   Map<String, dynamic> toMap() => {
