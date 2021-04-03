@@ -23,43 +23,78 @@ class ItemsList extends StatefulWidget {
 
 class _ItemsListState extends State<ItemsList> {
 
-  late List<ItemEntity> parentPath;
-  late ItemEntity currentParent;
+  late List<ItemEntity> _parentPath;
+  late ItemEntity _currentParent;
+  late List<ItemEntity> _itemsSelected;
+  late bool _selectingFolderToMoveItems;
 
   @override
   void initState() {
     super.initState();
 
-    parentPath = [ItemEntity(id: -1, name: "Principal")];
-    currentParent = parentPath.first;
+    _parentPath = [ItemEntity(id: -1, name: "Principal")];
+    _currentParent = _parentPath.first;
+    _itemsSelected = [];
+    _selectingFolderToMoveItems = false;
   }
 
   Future<bool> _onBackPressed() async {
-    bool empty = parentPath.length == 1;
-    if (!empty) {
+    bool finishApp = _parentPath.length == 1 && _itemsSelected.isEmpty;
+    if (_itemsSelected.isNotEmpty) {
       setState(() {
-        parentPath.removeLast();
-        currentParent = parentPath.last;
+        _itemsSelected.clear();
+      });
+    } else if (!finishApp) {
+      setState(() {
+        _parentPath.removeLast();
+        _currentParent = _parentPath.last;
       });
     }
-    return empty;
+    return finishApp;
   }
 
   @override
   Widget build(BuildContext context) {
-    changeFolder(currentParent);
+    _changeFolder(_currentParent);
 
     return WillPopScope(
       onWillPop: _onBackPressed,
       child: Scaffold(
         appBar: AppBar(
           leading: _buildBack(),
-          title: Text("Categoria ${currentParent.name}"),
+          title: Text(getTitle()),
           actions: <Widget>[
-            IconButton(
+            if (_itemsSelected.isEmpty) IconButton(
               icon: Icon(Icons.search),
               onPressed: () {
                 showSearch(context: context, delegate: ItemsSearchDelegate());
+              },
+            ),
+            if (_itemsSelected.isNotEmpty && !_selectingFolderToMoveItems) IconButton(
+              icon: Icon(Icons.drive_file_move),
+              onPressed: () {
+                setState(() {
+                  _selectingFolderToMoveItems = true;
+                });
+              },
+            ),
+            if (_itemsSelected.isNotEmpty && _selectingFolderToMoveItems) IconButton(
+              icon: Icon(Icons.check),
+              onPressed: () async {
+                await _moveItems(_currentParent.id!);
+                setState(() {
+                  _selectingFolderToMoveItems = false;
+                  _itemsSelected.clear();
+                });
+              },
+            ),
+            if (_itemsSelected.isNotEmpty && !_selectingFolderToMoveItems) IconButton(
+              icon: Icon(Icons.delete),
+              onPressed: () {
+                setState(() {
+                  _itemsSelected.forEach((element) { _onItemOptionSelected(element, "Delete"); });
+                  _itemsSelected.clear();
+                });
               },
             ),
           ],
@@ -99,6 +134,18 @@ class _ItemsListState extends State<ItemsList> {
     );
   }
 
+  String getTitle() {
+    if ((_itemsSelected.isEmpty)) {
+      return "Categoria ${_currentParent.name}";
+    } else {
+      if (_selectingFolderToMoveItems) {
+        return "Selecione o destino";
+      } else {
+        return "Itens selecionados ${_itemsSelected.length}";
+      }
+    }
+  }
+
   Widget _buildList(BuildContext context, ItemState state) {
     if (state is ItemFetchingState) {
       return Center(child: CircularProgressIndicator());
@@ -115,17 +162,35 @@ class _ItemsListState extends State<ItemsList> {
   }
 
   Widget _buildRow(ItemEntity item) {
+    bool isSelected = _itemsSelected.any((element) => element.id == item.id);
     return new Card(
       child: ListTile(
-        leading: item.icon,
+        leading: (isSelected) ? Icon(Icons.check) : item.icon,
         title: Text(item.name),
         subtitle: Text(item.description.onEmpty("Sem descrição")),
-        onTap: () async {
-          if (item.isFolder) {
+        onTap: () {
+          if (isSelected && !_selectingFolderToMoveItems) {
             setState(() {
-              changeFolder(item);
+              _itemsSelected.removeWhere((element) => element.id == item.id);
+            });
+          } else if (_itemsSelected.isNotEmpty && !_selectingFolderToMoveItems) {
+            setState(() {
+              if (!isSelected) {
+                _itemsSelected.add(item);
+              }
+            });
+          } else if (item.isFolder && !isSelected) {
+            setState(() {
+              _changeFolder(item);
             });
           }
+        },
+        onLongPress: () {
+          setState(() {
+            if (!isSelected) {
+              _itemsSelected.add(item);
+            }
+          });
         },
         trailing: PopupMenuButton<String>(
           icon: Icon(Icons.more_vert),
@@ -136,17 +201,6 @@ class _ItemsListState extends State<ItemsList> {
         ),
       ),
     );
-  }
-
-  void changeFolder(ItemEntity newParent) {
-    if (!parentPath.any((element) => element.id == newParent.id)) {
-      int index = parentPath.indexWhere((element) => element.id == currentParent.id);
-      parentPath.removeRange(index + 1, parentPath.length);
-      parentPath.add(newParent);
-    }
-
-    currentParent = newParent;
-    BlocProvider.of<ItemBloc>(context).add(ListItemEvent(newParent.id!));
   }
 
   List<PopupMenuItem<String>> _buildItemOptionMenu(ItemEntity item) {
@@ -168,22 +222,6 @@ class _ItemsListState extends State<ItemsList> {
     ];
   }
 
-  void _onItemOptionSelected(ItemEntity item, String value) {
-    if (item.isFolder) {
-      if (value == 'Edit') {
-        _editFolder(item);
-      } else if (value == 'Delete') {
-        _deleteFolder(item);
-      }
-    } else {
-      if (value == 'Edit') {
-        _editItem(item);
-      } else if (value == 'Delete') {
-        _deleteItem(item);
-      }
-    }
-  }
-
   Widget _buildNoItems() {
     return Center(
       child: Text("Sem itens"),
@@ -191,13 +229,13 @@ class _ItemsListState extends State<ItemsList> {
   }
 
   Widget? _buildBack() {
-    if (currentParent.id == -1) {
-      return null;
-    } else {
+    if (_currentParent.id != -1 || _itemsSelected.isNotEmpty) {
       return IconButton(
         icon: Icon(Icons.arrow_back),
         onPressed: _onBackPressed,
       );
+    } else {
+      return null;
     }
   }
 
@@ -210,7 +248,7 @@ class _ItemsListState extends State<ItemsList> {
         crossAxisAlignment: CrossAxisAlignment.end,
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: <Widget>[
-          for (var parent in parentPath)
+          for (var parent in _parentPath)
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 2.0, vertical: 5.0),
               child: GestureDetector(
@@ -224,7 +262,7 @@ class _ItemsListState extends State<ItemsList> {
                   ),
                   style: ButtonStyle(
                     padding: MaterialStateProperty.all<EdgeInsetsGeometry>(EdgeInsets.symmetric(horizontal: 15.0)),
-                    backgroundColor: MaterialStateProperty.all<Color>((parent.id == currentParent.id) ? Colors.lightBlueAccent : Colors.white),
+                    backgroundColor: MaterialStateProperty.all<Color>((parent.id == _currentParent.id) ? Colors.lightBlueAccent : Colors.white),
                     shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                       RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(18.0),
@@ -234,7 +272,7 @@ class _ItemsListState extends State<ItemsList> {
                   ),
                   onPressed: () {
                     setState(() {
-                      currentParent = parent;
+                      _currentParent = parent;
                     });
                   },
                 ),
@@ -260,10 +298,37 @@ class _ItemsListState extends State<ItemsList> {
     );
   }
 
+  void _onItemOptionSelected(ItemEntity item, String value) {
+    if (item.isFolder) {
+      if (value == 'Edit') {
+        _editFolder(item);
+      } else if (value == 'Delete') {
+        _deleteFolder(item);
+      }
+    } else {
+      if (value == 'Edit') {
+        _editItem(item);
+      } else if (value == 'Delete') {
+        _deleteItem(item);
+      }
+    }
+  }
+
+  void _changeFolder(ItemEntity newParent) {
+    if (!_parentPath.any((element) => element.id == newParent.id)) {
+      int index = _parentPath.indexWhere((element) => element.id == _currentParent.id);
+      _parentPath.removeRange(index + 1, _parentPath.length);
+      _parentPath.add(newParent);
+    }
+
+    _currentParent = newParent;
+    BlocProvider.of<ItemBloc>(context).add(ListItemEvent(newParent.id!));
+  }
+
   // actions
   Future<void> _addItem() async {
     await Navigator.of(context).pushNamed('/item',
-        arguments: CreateEditItemArgs(parentItemId: currentParent.id));
+        arguments: CreateEditItemArgs(parentItemId: _currentParent.id));
   }
 
   Future<void> _editItem(ItemEntity item) async {
@@ -285,7 +350,7 @@ class _ItemsListState extends State<ItemsList> {
 
   Future<void> _addFolder() async {
     await Navigator.of(context).pushNamed('/folder',
-        arguments: CreateEditFolderArgs(parentItemId: currentParent.id));
+        arguments: CreateEditFolderArgs(parentItemId: _currentParent.id));
   }
 
   Future<void> _editFolder(ItemEntity item) async {
@@ -320,13 +385,13 @@ class _ItemsListState extends State<ItemsList> {
 
   Future<void> _deleteFolder(ItemEntity folder) async {
     try {
-      ItemEntity? parentFolder = (parentPath.isEmpty || folder.parent == -1) ? null : parentPath.firstWhere((element) => element.id == folder.parent);
+      ItemEntity? parentFolder = (_parentPath.isEmpty || folder.parent == -1) ? null : _parentPath.firstWhere((element) => element.id == folder.parent);
       List<ItemEntity> children = await BlocProvider.of<ItemBloc>(context).list(folder.id!);
 
       if (children.isNotEmpty) {
         int response = await showFolderNotEmptyAlert(folder, parentFolder, children) ?? 0;
         if (response == 1) {
-          await BlocProvider.of<ItemBloc>(context).moveItems(parentFolder?.id ?? -1, folder.id!);
+          await BlocProvider.of<ItemBloc>(context).changeParent(parentFolder?.id ?? -1, folder.id!);
         } else if (response == 2) {
           // TODO: eliminar resíduos de todos os descendentes dessa pasta
         } else {
@@ -343,5 +408,11 @@ class _ItemsListState extends State<ItemsList> {
       print(e);
       showSnack("Erro ao deletar a categoria ${folder.name}");
     }
+  }
+
+  Future<void> _moveItems(int newParent) async {
+    _itemsSelected.forEach((element) async {
+      await BlocProvider.of<ItemBloc>(context).move(element.id!, newParent);
+    });
   }
 }

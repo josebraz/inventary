@@ -28,8 +28,12 @@ class ItemRepository {
     return itemDAO.search(filter);
   }
 
-  Future<void> moveItems(int to, int from) async {
-    await itemDAO.moveItems(to, from);
+  Future<void> changeParent(int to, int from) {
+    return itemDAO.changeParent(to, from);
+  }
+
+  Future<void> move(int id, int newParent) {
+    return itemDAO.move(id, newParent);
   }
 
 }

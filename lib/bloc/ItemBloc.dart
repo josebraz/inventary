@@ -76,12 +76,21 @@ class ItemBloc extends Bloc<ItemEvent, ItemState> {
     return itemRepository.list(parent);
   }
 
-  Future<void> moveItems(int to, int from) async {
+  Future<void> changeParent(int parentTo, int parentFrom) async {
     try {
-      await itemRepository.moveItems(to, from);
+      await itemRepository.changeParent(parentTo, parentFrom);
       add(RefreshItemEvent());
     } catch(e) {
-      print("Error moving items to $to from $from");
+      print("Error moving items to $parentTo from $parentFrom");
+    }
+  }
+
+  Future<void> move(int id, int newParent) async {
+    try {
+      await itemRepository.move(id, newParent);
+      add(RefreshItemEvent());
+    } catch(e) {
+      print("Error moving items id $id newParent $newParent");
     }
   }
 
