@@ -28,7 +28,7 @@ class ItemSearchBloc extends Bloc<ItemEvent, ItemState> {
       if (items.length == 0) {
         yield ItemEmptyState();
       } else {
-        yield ItemFetchedState(items);
+        yield ItemFetchedState(items, -1);
       }
     } catch (_) {
       yield ItemErrorState();

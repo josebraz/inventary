@@ -9,6 +9,8 @@ class ItemBloc extends Bloc<ItemEvent, ItemState> {
   
   final ItemRepository itemRepository;
 
+  int currentFolder = -1;
+
   ItemBloc(this.itemRepository) : super(ItemUninitializedState());
   
   @override
@@ -22,39 +24,64 @@ class ItemBloc extends Bloc<ItemEvent, ItemState> {
     List<ItemEntity> items = [];
     if (state is ItemFetchedState) {
       items = (state as ItemFetchedState).items;
+      currentFolder = items.first.parent;
     }
+
     try {
       if (event is DeleteItemEvent) {
-        items.removeWhere((element) => element.id == event.deletedItemId);
+        if (event.deletedItem.parent == currentFolder) {
+          items.removeWhere((element) => element.id == event.deletedItem.id);
+        }
       } else if (event is CreateItemEvent) {
-        items.add(event.item);
+        if (event.item.parent == currentFolder) {
+          items.add(event.item);
+        }
       } else if (event is EditItemEvent) {
-        int index = items.indexWhere((element) => element.id == event.editItem.id);
-        if (index != -1) {
-          items[index] = event.editItem;
-        } else {
-          items.add(event.editItem);
+        if (event.editItem.parent == currentFolder) {
+          int index = items.indexWhere((element) => element.id == event.editItem.id);
+          if (index != -1) {
+            items[index] = event.editItem;
+          } else {
+            items.add(event.editItem);
+          }
         }
       } else if (event is ListItemEvent) {
+        currentFolder = event.parent;
         yield ItemFetchingState();
-        items = await itemRepository.list(event.parent);
+        items = await itemRepository.list(currentFolder);
+      } else if (event is RefreshItemEvent) {
+        yield ItemFetchingState();
+        items = await itemRepository.list(items.length == 0 ? -1 : items.first.parent);
       }
       if (items.length == 0) {
         yield ItemEmptyState();
       } else {
-        yield ItemFetchedState(items);
+        yield ItemFetchedState(items, items.first.parent);
       }
     } catch (_) {
       yield ItemErrorState();
     }
   }
 
-  Future<void> delete(int id) async {
+  Future<void> delete(ItemEntity item) async {
     try {
-      await itemRepository.delete(id);
-      add(DeleteItemEvent(id));
+      await itemRepository.delete(item.id!);
+      add(DeleteItemEvent(item));
     } catch(e) {
-      print("Error delete item $id");
+      print("Error delete item ${item.id}");
+    }
+  }
+
+  Future<List<ItemEntity>> list([int parent = -1]) {
+    return itemRepository.list(parent);
+  }
+
+  Future<void> moveItems(int to, int from) async {
+    try {
+      await itemRepository.moveItems(to, from);
+      add(RefreshItemEvent());
+    } catch(e) {
+      print("Error moving items to $to from $from");
     }
   }
 

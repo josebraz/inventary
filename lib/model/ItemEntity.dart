@@ -1,6 +1,8 @@
 
 import 'dart:convert';
+import 'dart:io';
 
+import 'package:flutter/material.dart';
 import 'package:inventary/model/BaseItemEntity.dart';
 
 class ItemEntity extends BasicItemEntity {
@@ -44,6 +46,24 @@ class ItemEntity extends BasicItemEntity {
 
   List<String?> get images {
     return attachmentsPath;
+  }
+
+  Widget get icon {
+    if (attachmentsPath.isEmpty) {
+      if (isFolder) {
+        return Icon(
+          Icons.folder,
+          color: Colors.grey,
+        );
+      } else {
+        return Icon(
+          Icons.insert_drive_file_rounded,
+          color: Colors.grey,
+        );
+      }
+    } else {
+      return Image.file(File(attachmentsPath.first!));
+    }
   }
 
 }

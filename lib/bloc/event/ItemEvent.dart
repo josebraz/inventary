@@ -19,8 +19,12 @@ class EditItemEvent extends ItemEvent {
 }
 
 class DeleteItemEvent extends ItemEvent {
-  final int? deletedItemId;
-  DeleteItemEvent(this.deletedItemId);
+  final ItemEntity deletedItem;
+  DeleteItemEvent(this.deletedItem);
+}
+
+class RefreshItemEvent extends ItemEvent {
+  RefreshItemEvent();
 }
 
 class ListItemEvent extends ItemEvent {

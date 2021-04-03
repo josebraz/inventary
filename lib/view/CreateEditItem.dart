@@ -15,14 +15,13 @@ class CreateEditItemArgs {
 }
 
 class CreateEditItem extends StatefulWidget {
-  CreateEditItem({Key? key, required this.title, this.startItem, this.parentId = -1}) : super(key: key);
+  CreateEditItem({Key? key, required this.title, required this.startItem}) : super(key: key);
 
   final String title;
-  final int parentId;
-  final ItemEntity? startItem;
+  final ItemEntity startItem;
 
   @override
-  _CreateEditItemState createState() => _CreateEditItemState(startItem, parentId);
+  _CreateEditItemState createState() => _CreateEditItemState(startItem);
 }
 
 class _CreateEditItemState extends State<CreateEditItem> {
@@ -31,8 +30,8 @@ class _CreateEditItemState extends State<CreateEditItem> {
   late List<String?> _imagesList;
   late ItemEntity _item;
 
-  _CreateEditItemState(ItemEntity? startItem, int parentId) {
-    this._item = startItem ?? ItemEntity(isFolder: false, parent: parentId);
+  _CreateEditItemState(ItemEntity startItem) {
+    this._item = startItem;
     this._imagesList = _item.attachmentsPath.map((e) => e).toList();
   }
 

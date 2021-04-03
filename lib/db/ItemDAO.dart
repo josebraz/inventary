@@ -30,4 +30,14 @@ class ItemDAO extends EntityDAO<ItemEntity> {
     });
   }
 
+  Future<void> moveItems(int to, int from) async {
+    final Database db = await database;
+    await db.update(
+      tableName,
+      { "parent": to },
+      where: "parent = ?",
+      whereArgs: [from]
+    );
+  }
+
 }

@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:inventary/bloc/ItemBloc.dart';
 import 'package:inventary/bloc/ItemSearchBloc.dart';
+import 'package:inventary/model/ItemEntity.dart';
 import 'package:inventary/repository/ItemRepository.dart';
 import 'package:inventary/view/CreateEditFolder.dart';
 import 'package:inventary/view/CreateEditItem.dart';
@@ -50,8 +51,7 @@ class MyApp extends StatelessWidget {
                 builder: (context) {
                   return CreateEditItem(
                     title: args!.item != null ? 'Editar ${args.item!.name}' : 'Criar item',
-                    startItem: args.item,
-                    parentId: args.parentItemId ?? -1,
+                    startItem: args.item ?? ItemEntity(id: null, name: "", parent: args.parentItemId ?? -1),
                   );
                 }
               );

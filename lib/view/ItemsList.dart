@@ -1,8 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'dart:io';
 import 'package:inventary/bloc/ItemBloc.dart';
 import 'package:inventary/bloc/event/ItemEvent.dart';
 import 'package:inventary/bloc/state/ItemState.dart';
@@ -21,45 +22,44 @@ class ItemsList extends StatefulWidget {
 }
 
 class _ItemsListState extends State<ItemsList> {
-  List<ItemEntity> parentPath = [];
 
-  ItemEntity? get currentParent {
-    var length = parentPath.length;
-    if (length > 0) {
-      return parentPath.last;
-    } else {
-      return null;
-    }
+  late List<ItemEntity> parentPath;
+  late ItemEntity currentParent;
+
+  @override
+  void initState() {
+    super.initState();
+
+    parentPath = [ItemEntity(id: -1, name: "Principal")];
+    currentParent = parentPath.first;
   }
 
   Future<bool> _onBackPressed() async {
-    if (parentPath.isEmpty)
-      return true;
-    else {
+    bool empty = parentPath.length == 1;
+    if (!empty) {
       setState(() {
         parentPath.removeLast();
+        currentParent = parentPath.last;
       });
-      return false;
     }
+    return empty;
   }
 
   @override
   Widget build(BuildContext context) {
-    BlocProvider.of<ItemBloc>(context)
-        .add(ListItemEvent(currentParent?.id ?? -1));
+    changeFolder(currentParent);
 
     return WillPopScope(
       onWillPop: _onBackPressed,
       child: Scaffold(
         appBar: AppBar(
           leading: _buildBack(),
-          title: Text("Categoria ${currentParent?.name ?? "Principal"}"),
+          title: Text("Categoria ${currentParent.name}"),
           actions: <Widget>[
             IconButton(
               icon: Icon(Icons.search),
               onPressed: () {
-                showSearch(
-                    context: context, delegate: ItemsSearchDelegate());
+                showSearch(context: context, delegate: ItemsSearchDelegate());
               },
             ),
           ],
@@ -85,13 +85,13 @@ class _ItemsListState extends State<ItemsList> {
             FloatingActionButton(
               onPressed: _addFolder,
               tooltip: "Adicionar categoria",
-              child: Icon(Icons.folder),
+              child: Icon(Icons.create_new_folder_rounded),
             ),
             SizedBox(height: 10),
             FloatingActionButton(
               onPressed: _addItem,
               tooltip: 'Adicionar Item',
-              child: Icon(Icons.add),
+              child: Icon(Icons.add_rounded),
             ),
           ],
         ),
@@ -117,20 +117,14 @@ class _ItemsListState extends State<ItemsList> {
   Widget _buildRow(ItemEntity item) {
     return new Card(
       child: ListTile(
-        leading: item.attachmentsPath.isEmpty
-            ? item.isFolder
-                ? Icon(Icons.folder)
-                : Icon(Icons.insert_drive_file_rounded)
-            : Image.file(File(item.attachmentsPath.first!)),
+        leading: item.icon,
         title: Text(item.name),
         subtitle: Text(item.description.onEmpty("Sem descrição")),
         onTap: () async {
           if (item.isFolder) {
             setState(() {
-              parentPath.add(item);
+              changeFolder(item);
             });
-            BlocProvider.of<ItemBloc>(context)
-                .add(ListItemEvent(currentParent?.id ?? -1));
           }
         },
         trailing: PopupMenuButton<String>(
@@ -142,6 +136,17 @@ class _ItemsListState extends State<ItemsList> {
         ),
       ),
     );
+  }
+
+  void changeFolder(ItemEntity newParent) {
+    if (!parentPath.any((element) => element.id == newParent.id)) {
+      int index = parentPath.indexWhere((element) => element.id == currentParent.id);
+      parentPath.removeRange(index + 1, parentPath.length);
+      parentPath.add(newParent);
+    }
+
+    currentParent = newParent;
+    BlocProvider.of<ItemBloc>(context).add(ListItemEvent(newParent.id!));
   }
 
   List<PopupMenuItem<String>> _buildItemOptionMenu(ItemEntity item) {
@@ -186,7 +191,7 @@ class _ItemsListState extends State<ItemsList> {
   }
 
   Widget? _buildBack() {
-    if (parentPath.isEmpty) {
+    if (currentParent.id == -1) {
       return null;
     } else {
       return IconButton(
@@ -205,45 +210,36 @@ class _ItemsListState extends State<ItemsList> {
         crossAxisAlignment: CrossAxisAlignment.end,
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: <Widget>[
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 2.0, vertical: 5.0),
-            child: IconButton(
-              icon: Icon(Icons.home),
-              onPressed: () {
-                setState(() {
-                  parentPath.clear();
-                });
-              },
-            ),
-          ),
           for (var parent in parentPath)
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 2.0, vertical: 5.0),
               child: GestureDetector(
-                child: ElevatedButton(
-                  child: Text(
+                child: ElevatedButton.icon(
+                  icon: (parent.id == -1) ? Icon(Icons.home, color: Colors.grey) : parent.icon,
+                  label: Text(
                     "${parent.name}",
                     style: TextStyle(
-                      color: Colors.black,
+                      color: Colors.black87,
                     ),
                   ),
                   style: ButtonStyle(
                     padding: MaterialStateProperty.all<EdgeInsetsGeometry>(EdgeInsets.symmetric(horizontal: 15.0)),
-                    backgroundColor: MaterialStateProperty.all<Color>(Colors.white),
+                    backgroundColor: MaterialStateProperty.all<Color>((parent.id == currentParent.id) ? Colors.lightBlueAccent : Colors.white),
                     shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                        RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(18.0),
-                            side: BorderSide(color: Colors.blue))),
+                      RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18.0),
+                        side: BorderSide(color: Colors.blue),
+                      ),
+                    ),
                   ),
                   onPressed: () {
                     setState(() {
-                      int index = parentPath
-                          .indexWhere((element) => element.id == parent.id);
-                      parentPath.removeRange(index + 1, parentPath.length);
+                      currentParent = parent;
                     });
                   },
                 ),
                 onLongPressEnd: (LongPressEndDetails details) {
+                  if (parent.id == -1) return;
                   showMenu<String>(
                     context: context,
                     position: RelativeRect.fromLTRB(
@@ -267,7 +263,7 @@ class _ItemsListState extends State<ItemsList> {
   // actions
   Future<void> _addItem() async {
     await Navigator.of(context).pushNamed('/item',
-        arguments: CreateEditItemArgs(parentItemId: currentParent?.id ?? -1));
+        arguments: CreateEditItemArgs(parentItemId: currentParent.id));
   }
 
   Future<void> _editItem(ItemEntity item) async {
@@ -277,8 +273,7 @@ class _ItemsListState extends State<ItemsList> {
 
   Future<void> _deleteItem(ItemEntity item) async {
     try {
-      await BlocProvider.of<ItemBloc>(context).delete(item.id!);
-      BlocProvider.of<ItemBloc>(context).add(DeleteItemEvent(item.id));
+      await BlocProvider.of<ItemBloc>(context).delete(item);
       showSnack("Item ${item.name} deletado com sucesso",
           actionText: "Desfazer", actionClicked: () async {
         await BlocProvider.of<ItemBloc>(context).insert(item);
@@ -290,7 +285,7 @@ class _ItemsListState extends State<ItemsList> {
 
   Future<void> _addFolder() async {
     await Navigator.of(context).pushNamed('/folder',
-        arguments: CreateEditFolderArgs(parentItemId: currentParent?.id ?? -1));
+        arguments: CreateEditFolderArgs(parentItemId: currentParent.id));
   }
 
   Future<void> _editFolder(ItemEntity item) async {
@@ -298,16 +293,55 @@ class _ItemsListState extends State<ItemsList> {
         .pushNamed('/folder', arguments: CreateEditFolderArgs(folder: item));
   }
 
-  Future<void> _deleteFolder(ItemEntity item) async {
+  Future<int?> showFolderNotEmptyAlert(ItemEntity folder, ItemEntity? parentFolder, List<ItemEntity> children) async {
+    String message = "A categoria ${folder.name} contém alguns itens como ${children.take(3).map((e) => e.name).join(", ")}. O que deseja fazer?";
+
+    return showDialog<int?>(
+      context: context,
+      builder: (BuildContext context) {
+        // retorna um objeto do tipo Dialog
+        return AlertDialog(
+          title: Text("A categoria não está vazia"),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              child: Text("Mover items para categoria ${parentFolder?.name ?? "Principal"}"),
+              onPressed: () => Navigator.of(context).pop(1),
+            ),
+            TextButton(
+              child: Text("Excluir Tudo", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+              onPressed: () => Navigator.of(context).pop(2),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _deleteFolder(ItemEntity folder) async {
     try {
-      await BlocProvider.of<ItemBloc>(context).delete(item.id!);
-      BlocProvider.of<ItemBloc>(context).add(DeleteItemEvent(item.id));
-      showSnack("Categoria ${item.name} deletada com sucesso",
+      ItemEntity? parentFolder = (parentPath.isEmpty || folder.parent == -1) ? null : parentPath.firstWhere((element) => element.id == folder.parent);
+      List<ItemEntity> children = await BlocProvider.of<ItemBloc>(context).list(folder.id!);
+
+      if (children.isNotEmpty) {
+        int response = await showFolderNotEmptyAlert(folder, parentFolder, children) ?? 0;
+        if (response == 1) {
+          await BlocProvider.of<ItemBloc>(context).moveItems(parentFolder?.id ?? -1, folder.id!);
+        } else if (response == 2) {
+          // TODO: eliminar resíduos de todos os descendentes dessa pasta
+        } else {
+          return;
+        }
+      }
+
+      await BlocProvider.of<ItemBloc>(context).delete(folder);
+      showSnack("Categoria ${folder.name} deletada com sucesso",
           actionText: "Desfazer", actionClicked: () async {
-        await BlocProvider.of<ItemBloc>(context).insert(item);
+        await BlocProvider.of<ItemBloc>(context).insert(folder);
       });
     } catch (e) {
-      showSnack("Erro ao deletar a categoria ${item.name}");
+      print(e);
+      showSnack("Erro ao deletar a categoria ${folder.name}");
     }
   }
 }
