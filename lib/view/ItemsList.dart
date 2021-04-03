@@ -164,8 +164,13 @@ class _ItemsListState extends State<ItemsList> {
   Widget _buildRow(ItemEntity item) {
     bool isSelected = _itemsSelected.any((element) => element.id == item.id);
     return new Card(
+      elevation: (isSelected) ? 10.0 : 1.0,
+      shape: RoundedRectangleBorder(
+        side: BorderSide(color: (isSelected) ? Colors.black38 : Colors.white70, width: (isSelected) ? 1.3 : 1),
+        borderRadius: BorderRadius.circular(10),
+      ),
       child: ListTile(
-        leading: (isSelected) ? Icon(Icons.check) : item.icon,
+        leading: item.icon,
         title: Text(item.name),
         subtitle: Text(item.description.onEmpty("Sem descrição")),
         onTap: () {
@@ -192,7 +197,7 @@ class _ItemsListState extends State<ItemsList> {
             }
           });
         },
-        trailing: PopupMenuButton<String>(
+        trailing: (isSelected) ? Icon(Icons.check) : PopupMenuButton<String>(
           icon: Icon(Icons.more_vert),
           itemBuilder: (context) => _buildItemOptionMenu(item),
           onSelected: (String value) {
@@ -262,11 +267,11 @@ class _ItemsListState extends State<ItemsList> {
                   ),
                   style: ButtonStyle(
                     padding: MaterialStateProperty.all<EdgeInsetsGeometry>(EdgeInsets.symmetric(horizontal: 15.0)),
-                    backgroundColor: MaterialStateProperty.all<Color>((parent.id == _currentParent.id) ? Colors.lightBlueAccent : Colors.white),
+                    backgroundColor: MaterialStateProperty.all<Color>((parent.id == _currentParent.id) ? Colors.lightBlue.shade200 : Colors.white),
                     shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                       RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(18.0),
-                        side: BorderSide(color: Colors.blue),
+                        side: BorderSide(color: Colors.blue.shade200),
                       ),
                     ),
                   ),
@@ -316,13 +321,20 @@ class _ItemsListState extends State<ItemsList> {
 
   void _changeFolder(ItemEntity newParent) {
     if (!_parentPath.any((element) => element.id == newParent.id)) {
-      int index = _parentPath.indexWhere((element) => element.id == _currentParent.id);
-      _parentPath.removeRange(index + 1, _parentPath.length);
+      _updateHeader(_currentParent.id);
       _parentPath.add(newParent);
     }
-
     _currentParent = newParent;
     BlocProvider.of<ItemBloc>(context).add(ListItemEvent(newParent.id!));
+  }
+
+  void _updateHeader(int? removeStartId, {bool removeInclude = false}) {
+    if (removeStartId != null) {
+      int index = _parentPath.indexWhere((element) => element.id == removeStartId);
+      if (index >= 0) {
+        _parentPath.removeRange((removeInclude) ? index : index + 1, _parentPath.length);
+      }
+    }
   }
 
   // actions
@@ -400,6 +412,13 @@ class _ItemsListState extends State<ItemsList> {
       }
 
       await BlocProvider.of<ItemBloc>(context).delete(folder);
+      setState(() {
+        _updateHeader(folder.id, removeInclude: true);
+      });
+      if (_currentParent.id == folder.id) {
+        BlocProvider.of<ItemBloc>(context).add(ListItemEvent(folder.parent));
+      }
+
       showSnack("Categoria ${folder.name} deletada com sucesso",
           actionText: "Desfazer", actionClicked: () async {
         await BlocProvider.of<ItemBloc>(context).insert(folder);

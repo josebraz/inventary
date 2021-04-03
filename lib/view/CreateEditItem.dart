@@ -15,7 +15,8 @@ class CreateEditItemArgs {
 }
 
 class CreateEditItem extends StatefulWidget {
-  CreateEditItem({Key? key, required this.title, required this.startItem}) : super(key: key);
+  CreateEditItem({Key? key, required this.title, required this.startItem})
+      : super(key: key);
 
   final String title;
   final ItemEntity startItem;
@@ -40,17 +41,25 @@ class _CreateEditItemState extends State<CreateEditItem> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
-        actions: <Widget>[
-          IconButton(
-            icon: const Icon(Icons.save),
-            tooltip: 'Salvar',
-            onPressed: _save,
-          ),
-        ],
       ),
       body: Padding(
         padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
         child: _buildForm(),
+      ),
+      bottomNavigationBar: Container(
+        height: 50.0,
+        child: ElevatedButton.icon(
+          icon: Icon(Icons.save),
+          label: Text((_item.id == null) ? "Salvar novo item" : "Salvar alterações"),
+          onPressed: _save,
+          style: ButtonStyle(
+            shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+              RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(0.0),
+              ),
+            ),
+          ),
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _takePicture,
@@ -141,7 +150,6 @@ class _CreateEditItemState extends State<CreateEditItem> {
             ),
             SizedBox(height: 5),
             if (_imagesList.length > 0) Image.file(File(_imagesList.first!)),
-            SizedBox(height: 15),
           ],
         ),
       ),
@@ -169,5 +177,4 @@ class _CreateEditItemState extends State<CreateEditItem> {
       });
     }
   }
-
 }

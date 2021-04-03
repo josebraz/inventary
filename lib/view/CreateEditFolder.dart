@@ -41,7 +41,22 @@ class _CreateEditFolderState extends State<CreateEditFolder> {
       body: Padding(
         padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
         child: _buildForm(),
-      )
+      ),
+      bottomNavigationBar: Container(
+        height: 50.0,
+        child: ElevatedButton.icon(
+          icon: Icon(Icons.save),
+          label: Text((_item.id == null) ? "Salvar nova categoria" : "Salvar alterações"),
+          onPressed: _save,
+          style: ButtonStyle(
+            shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+              RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(0.0),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -71,26 +86,23 @@ class _CreateEditFolderState extends State<CreateEditFolder> {
               },
             ),
             SizedBox(height: 15),
-            ElevatedButton(
-              onPressed: () {
-                final form = _formKey.currentState!;
-                if (form.validate()) {
-                  form.save();
-                  BlocProvider.of<ItemBloc>(context).insert(_item).then((value) {
-                    showSnack('Categoria salva com sucesso');
-                    Navigator.of(context).pop();
-                  }).catchError((error) {
-                    print('error in inset item $error');
-                    showSnack('Erro ao salvar Categoria');
-                  });
-                }
-              },
-              child: Text('Confirmar'),
-            ),
           ],
         ),
       ),
     );
   }
 
+  void _save() {
+    final form = _formKey.currentState!;
+    if (form.validate()) {
+      form.save();
+      BlocProvider.of<ItemBloc>(context).insert(_item).then((value) {
+        showSnack('Categoria salva com sucesso');
+        Navigator.of(context).pop();
+      }).catchError((error) {
+        print('error in inset item $error');
+        showSnack('Erro ao salvar Categoria');
+      });
+    }
+  }
 }
