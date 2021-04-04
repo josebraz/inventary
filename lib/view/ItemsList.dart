@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -280,6 +281,7 @@ class _ItemsListState extends State<ItemsList> {
   }
 
   Widget _buildHeader() {
+    final blueNoSelected = Colors.blue.shade400;
     return SingleChildScrollView(
       reverse: true,
       scrollDirection: Axis.horizontal,
@@ -293,12 +295,14 @@ class _ItemsListState extends State<ItemsList> {
             child: GestureDetector(
               child: ElevatedButton.icon(
                 icon: (parent.isRoot)
-                    ? Icon(Icons.home, color: (parent.id == _currentParent.id) ? Colors.white : Colors.grey)
-                    : parent.getIcon((parent.id == _currentParent.id) ? Colors.white : Colors.grey),
+                    ? Icon(Icons.home, color: (parent.id == _currentParent.id) ? Colors.white : blueNoSelected)
+                    : parent.getIcon((parent.id == _currentParent.id) ? Colors.white : blueNoSelected),
                 label: Text(
                   "${parent.name}",
                   style: TextStyle(
-                    color: Colors.black87,
+                    fontFamily: "Montserrat",
+                    fontWeight: FontWeight.w500,
+                    color: (parent.id == _currentParent.id) ? Colors.white : blueNoSelected,
                   ),
                 ),
                 style: ButtonStyle(
@@ -307,7 +311,7 @@ class _ItemsListState extends State<ItemsList> {
                   shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(18.0),
-                      side: BorderSide(color: Colors.blue.shade200),
+                      side: BorderSide(color: blueNoSelected),
                     ),
                   ),
                 ),
