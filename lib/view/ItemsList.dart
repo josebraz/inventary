@@ -92,6 +92,7 @@ class _ItemsListState extends State<ItemsList> {
   Widget _buildNoSelectionAppBarActions() {
     return IconButton(
       icon: Icon(Icons.search),
+      tooltip: "Pesquisar",
       onPressed: () {
         showSearch(context: context, delegate: ItemsSearchDelegate());
       },
@@ -101,6 +102,7 @@ class _ItemsListState extends State<ItemsList> {
   Widget _buildSelectionAppBarActions() {
     return PopupMenuButton<String>(
       icon: Icon(Icons.more_vert),
+      tooltip: "Mais opções para os itens selecionados",
       itemBuilder: (context) => <PopupMenuItem<String>>[
         PopupMenuItem<String>(
           child: const Text('Mover'),
@@ -176,47 +178,65 @@ class _ItemsListState extends State<ItemsList> {
 
   Widget _buildListItem(ItemEntity item) {
     bool isSelected = _itemsSelected.any((element) => element.id == item.id);
-    return new Card(
-      elevation: (isSelected) ? 10.0 : 1.0,
-      shape: RoundedRectangleBorder(
-        side: BorderSide(color: (isSelected) ? Colors.black38 : Colors.white70,
-            width: (isSelected) ? 1.3 : 1),
-        borderRadius: BorderRadius.circular(10),
+    return Dismissible(
+      direction: DismissDirection.endToStart,
+      onDismissed: (direction) {
+        _delete(item);
+        _itemsSelected.removeWhere((element) => element.id == item.id);
+      },
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: EdgeInsets.only(right: 15.0),
+        color: Colors.red,
+        child: Icon(Icons.delete),
       ),
-      child: ListTile(
-        leading: item.getIcon(),
-        title: Text(item.name),
-        subtitle: Text(item.description.onEmpty("Sem descrição")),
-        onTap: () {
-          if (isSelected && !_selectingFolderToMoveItems) {
-            setState(() {
-              _itemsSelected.removeWhere((element) => element.id == item.id);
-            });
-          } else if (_itemsSelected.isNotEmpty && !_selectingFolderToMoveItems) {
+      key: ValueKey(item.id),
+      child: Card(
+        elevation: (isSelected) ? 10.0 : 1.0,
+        shape: RoundedRectangleBorder(
+          side: BorderSide(color: (isSelected) ? Colors.black38 : Colors.white70,
+              width: (isSelected) ? 1.3 : 1),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: ListTile(
+          leading: Hero(
+            tag: "item_picture",
+            child: item.getIcon(),
+          ),
+          title: Text(item.name),
+          subtitle: Text(item.description.onEmpty("Sem descrição")),
+          onTap: () {
+            if (isSelected && !_selectingFolderToMoveItems) {
+              setState(() {
+                _itemsSelected.removeWhere((element) => element.id == item.id);
+              });
+            } else if (_itemsSelected.isNotEmpty && !_selectingFolderToMoveItems) {
+              setState(() {
+                if (!isSelected) {
+                  _itemsSelected.add(item);
+                }
+              });
+            } else if (item.isFolder && !isSelected) {
+              setState(() {
+                _changeFolder(item);
+              });
+            }
+          },
+          onLongPress: () {
             setState(() {
               if (!isSelected) {
                 _itemsSelected.add(item);
               }
             });
-          } else if (item.isFolder && !isSelected) {
-            setState(() {
-              _changeFolder(item);
-            });
-          }
-        },
-        onLongPress: () {
-          setState(() {
-            if (!isSelected) {
-              _itemsSelected.add(item);
-            }
-          });
-        },
-        trailing: (isSelected) ? Icon(Icons.check) : PopupMenuButton<String>(
-          icon: Icon(Icons.more_vert),
-          itemBuilder: (context) => _buildListItemOptionMenu(item),
-          onSelected: (String value) {
-            _onItemOptionSelected(item, value);
           },
+          trailing: (isSelected) ? Icon(Icons.check) : PopupMenuButton<String>(
+            icon: Icon(Icons.more_vert),
+            tooltip: "Opções para o item",
+            itemBuilder: (context) => _buildListItemOptionMenu(item),
+            onSelected: (String value) {
+              _onItemOptionSelected(item, value);
+            },
+          ),
         ),
       ),
     );
@@ -251,6 +271,7 @@ class _ItemsListState extends State<ItemsList> {
     if (_currentParent.id != -1 || _itemsSelected.isNotEmpty) {
       return IconButton(
         icon: Icon(Icons.arrow_back),
+        tooltip: "Voltar",
         onPressed: _onBackPressed,
       );
     } else {
@@ -308,7 +329,9 @@ class _ItemsListState extends State<ItemsList> {
                   ),
                   items: _buildListItemOptionMenu(parent),
                 ).then((String? value) {
-                  _onItemOptionSelected(parent, value!);
+                  if (value != null) {
+                    _onItemOptionSelected(parent, value);
+                  }
                 });
               },
             )
@@ -361,18 +384,26 @@ class _ItemsListState extends State<ItemsList> {
   }
 
   void _onItemOptionSelected(ItemEntity item, String value) {
+    if (value == 'Delete') {
+      _delete(item);
+    } else if (value == 'Edit') {
+      _edit(item);
+    }
+  }
+
+  void _edit(ItemEntity item) {
     if (item.isFolder) {
-      if (value == 'Edit') {
-        _editFolder(item);
-      } else if (value == 'Delete') {
-        _deleteFolder(item);
-      }
+      _editFolder(item);
     } else {
-      if (value == 'Edit') {
-        _editItem(item);
-      } else if (value == 'Delete') {
-        _deleteItem(item);
-      }
+      _editItem(item);
+    }
+  }
+
+  void _delete(ItemEntity item) async {
+    if (item.isFolder) {
+      await _deleteFolder(item);
+    } else {
+      await _deleteItem(item);
     }
   }
 
@@ -461,8 +492,7 @@ class _ItemsListState extends State<ItemsList> {
         int response = await _showFolderNotEmptyAlert(
             folder, parentFolder, children) ?? 0;
         if (response == 1) {
-          await itemBloc.changeParent(
-              parentFolder?.id ?? -1, folder.id!);
+          await itemBloc.changeParent(parentFolder?.id ?? -1, folder.id!);
         } else if (response == 2) {
           // TODO: eliminar resíduos de todos os descendentes dessa pasta
         } else {

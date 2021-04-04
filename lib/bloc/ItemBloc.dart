@@ -12,6 +12,14 @@ class ItemBloc extends Bloc<ItemEvent, ItemState> {
   int currentFolder = -1;
 
   ItemBloc(this.itemRepository) : super(ItemUninitializedState());
+
+  List<ItemEntity> get itemsList {
+    if (state is ItemFetchedState) {
+      return (state as ItemFetchedState).items;
+    } else {
+      return [];
+    }
+  }
   
   @override
   void onTransition(Transition<ItemEvent, ItemState> transition) {
@@ -21,10 +29,13 @@ class ItemBloc extends Bloc<ItemEvent, ItemState> {
 
   @override
   Stream<ItemState> mapEventToState(ItemEvent event) async* {
-    List<ItemEntity> items = [];
+    List<ItemEntity> items = itemsList;
     if (state is ItemFetchedState) {
-      items = (state as ItemFetchedState).items;
-      currentFolder = items.first.parent;
+      if (items.isEmpty) {
+        currentFolder = -1;
+      } else {
+        currentFolder = items.first.parent;
+      }
     }
 
     try {

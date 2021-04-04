@@ -150,7 +150,10 @@ class _CreateEditItemState extends State<CreateEditItem> {
               },
             ),
             SizedBox(height: 5),
-            if (_imagesList.length > 0) Image.file(File(_imagesList.first!)),
+            if (_imagesList.length > 0) Hero(
+              tag: "item_picture",
+              child: Image.file(File(_imagesList.first!)),
+            ),
           ],
         ),
       ),
