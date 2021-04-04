@@ -15,6 +15,15 @@ class ItemEntity extends BasicItemEntity {
 
   ItemEntity({id, name = "", parent = -1, isFolder = false, this.location = "", this.description = "", this.loan = "", this.attachmentsPath = const []}) : super(id, name, parent, isFolder);
 
+  factory ItemEntity.root() => ItemEntity(
+    id: -1,
+    name: "Principal",
+    description: "Categoria principal, não pode ser apagada",
+    isFolder: true,
+  );
+
+  bool get isRoot => id == -1 && isFolder == true;
+
   @override
   Map<String, dynamic> toMap() => {
     'id': id,
@@ -48,17 +57,17 @@ class ItemEntity extends BasicItemEntity {
     return attachmentsPath;
   }
 
-  Widget get icon {
+  Widget getIcon([Color color = Colors.grey]) {
     if (attachmentsPath.isEmpty) {
       if (isFolder) {
         return Icon(
           Icons.folder,
-          color: Colors.grey,
+          color: color,
         );
       } else {
         return Icon(
           Icons.insert_drive_file_rounded,
-          color: Colors.grey,
+          color: color,
         );
       }
     } else {

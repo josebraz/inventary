@@ -32,75 +32,43 @@ class _ItemsListState extends State<ItemsList> {
   void initState() {
     super.initState();
 
-    _parentPath = [ItemEntity(id: -1, name: "Principal")];
+    _parentPath = [ItemEntity.root()];
     _currentParent = _parentPath.first;
     _itemsSelected = [];
     _selectingFolderToMoveItems = false;
+
+    _changeFolder(_currentParent);
   }
 
-  Future<bool> _onBackPressed() async {
-    bool finishApp = _parentPath.length == 1 && _itemsSelected.isEmpty;
-    if (_itemsSelected.isNotEmpty) {
-      setState(() {
-        _itemsSelected.clear();
-      });
-    } else if (!finishApp) {
-      setState(() {
-        _parentPath.removeLast();
-        _currentParent = _parentPath.last;
-      });
+  String get title {
+    if ((_itemsSelected.isEmpty)) {
+      return "Categoria ${_currentParent.name}";
+    } else {
+      if (_selectingFolderToMoveItems) {
+        return "Selecione o destino";
+      } else {
+        return "Itens selecionados ${_itemsSelected.length}";
+      }
     }
-    return finishApp;
   }
+
+  ItemBloc get itemBloc => BlocProvider.of<ItemBloc>(context);
 
   @override
   Widget build(BuildContext context) {
-    _changeFolder(_currentParent);
-
     return WillPopScope(
       onWillPop: _onBackPressed,
       child: Scaffold(
         appBar: AppBar(
-          leading: _buildBack(),
-          title: Text(getTitle()),
+          leading: _buildAppBarBack(),
+          title: Text(title),
           actions: <Widget>[
-            if (_itemsSelected.isEmpty) IconButton(
-              icon: Icon(Icons.search),
-              onPressed: () {
-                showSearch(context: context, delegate: ItemsSearchDelegate());
-              },
-            ),
-            if (_itemsSelected.isNotEmpty && !_selectingFolderToMoveItems) IconButton(
-              icon: Icon(Icons.drive_file_move),
-              onPressed: () {
-                setState(() {
-                  _selectingFolderToMoveItems = true;
-                });
-              },
-            ),
-            if (_itemsSelected.isNotEmpty && _selectingFolderToMoveItems) IconButton(
-              icon: Icon(Icons.check),
-              onPressed: () async {
-                await _moveItems(_currentParent.id!);
-                setState(() {
-                  _selectingFolderToMoveItems = false;
-                  _itemsSelected.clear();
-                });
-              },
-            ),
-            if (_itemsSelected.isNotEmpty && !_selectingFolderToMoveItems) IconButton(
-              icon: Icon(Icons.delete),
-              onPressed: () {
-                setState(() {
-                  _itemsSelected.forEach((element) { _onItemOptionSelected(element, "Delete"); });
-                  _itemsSelected.clear();
-                });
-              },
-            ),
+            if (_itemsSelected.isEmpty) _buildNoSelectionAppBarActions(),
+            if (_itemsSelected.isNotEmpty) _buildSelectionAppBarActions(),
           ],
         ),
         body: BlocBuilder<ItemBloc, ItemState>(
-          bloc: BlocProvider.of<ItemBloc>(context),
+          bloc: itemBloc,
           builder: (context, state) {
             return Column(
               children: <Widget>[
@@ -113,36 +81,81 @@ class _ItemsListState extends State<ItemsList> {
                 ),
               ],
             );
-          }),
-        floatingActionButton: Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: <Widget>[
-            FloatingActionButton(
-              onPressed: _addFolder,
-              tooltip: "Adicionar categoria",
-              child: Icon(Icons.create_new_folder_rounded),
-            ),
-            SizedBox(height: 10),
-            FloatingActionButton(
-              onPressed: _addItem,
-              tooltip: 'Adicionar Item',
-              child: Icon(Icons.add_rounded),
-            ),
-          ],
+          },
         ),
+        bottomNavigationBar: _buildBottomNavigationBar(),
+        floatingActionButton: _buildFloatingActionButtons(),
       ),
     );
   }
 
-  String getTitle() {
-    if ((_itemsSelected.isEmpty)) {
-      return "Categoria ${_currentParent.name}";
+  Widget _buildNoSelectionAppBarActions() {
+    return IconButton(
+      icon: Icon(Icons.search),
+      onPressed: () {
+        showSearch(context: context, delegate: ItemsSearchDelegate());
+      },
+    );
+  }
+
+  Widget _buildSelectionAppBarActions() {
+    return PopupMenuButton<String>(
+      icon: Icon(Icons.more_vert),
+      itemBuilder: (context) => <PopupMenuItem<String>>[
+        PopupMenuItem<String>(
+          child: const Text('Mover'),
+          value: 'Move',
+        ),
+        PopupMenuItem<String>(
+          child: const Text(
+            'Deletar',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.red,
+            ),
+          ),
+          value: 'Delete',
+        ),
+      ],
+      onSelected: (String value) {
+        if (value == 'Delete') {
+          setState(() {
+            _itemsSelected.forEach((element) {
+              _onItemOptionSelected(element, "Delete");
+            });
+            _itemsSelected.clear();
+          });
+        } else if (value == 'Move') {
+          setState(() {
+            _selectingFolderToMoveItems = true;
+          });
+        }
+      },
+    );
+  }
+
+  Widget? _buildFloatingActionButtons() {
+    if (_itemsSelected.isEmpty) {
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: <Widget>[
+          FloatingActionButton(
+            heroTag: "add_folder",
+            onPressed: _addFolder,
+            tooltip: "Adicionar categoria",
+            child: Icon(Icons.create_new_folder_rounded),
+          ),
+          SizedBox(height: 10),
+          FloatingActionButton(
+            heroTag: "add_item",
+            onPressed: _addItem,
+            tooltip: 'Adicionar Item',
+            child: Icon(Icons.add_rounded),
+          ),
+        ],
+      );
     } else {
-      if (_selectingFolderToMoveItems) {
-        return "Selecione o destino";
-      } else {
-        return "Itens selecionados ${_itemsSelected.length}";
-      }
+      return null;
     }
   }
 
@@ -153,7 +166,7 @@ class _ItemsListState extends State<ItemsList> {
       return ListView.builder(
         itemCount: state.items.length,
         itemBuilder: (context, i) {
-          return _buildRow(state.items[i]);
+          return _buildListItem(state.items[i]);
         },
       );
     } else {
@@ -161,16 +174,17 @@ class _ItemsListState extends State<ItemsList> {
     }
   }
 
-  Widget _buildRow(ItemEntity item) {
+  Widget _buildListItem(ItemEntity item) {
     bool isSelected = _itemsSelected.any((element) => element.id == item.id);
     return new Card(
       elevation: (isSelected) ? 10.0 : 1.0,
       shape: RoundedRectangleBorder(
-        side: BorderSide(color: (isSelected) ? Colors.black38 : Colors.white70, width: (isSelected) ? 1.3 : 1),
+        side: BorderSide(color: (isSelected) ? Colors.black38 : Colors.white70,
+            width: (isSelected) ? 1.3 : 1),
         borderRadius: BorderRadius.circular(10),
       ),
       child: ListTile(
-        leading: item.icon,
+        leading: item.getIcon(),
         title: Text(item.name),
         subtitle: Text(item.description.onEmpty("Sem descrição")),
         onTap: () {
@@ -199,7 +213,7 @@ class _ItemsListState extends State<ItemsList> {
         },
         trailing: (isSelected) ? Icon(Icons.check) : PopupMenuButton<String>(
           icon: Icon(Icons.more_vert),
-          itemBuilder: (context) => _buildItemOptionMenu(item),
+          itemBuilder: (context) => _buildListItemOptionMenu(item),
           onSelected: (String value) {
             _onItemOptionSelected(item, value);
           },
@@ -208,7 +222,7 @@ class _ItemsListState extends State<ItemsList> {
     );
   }
 
-  List<PopupMenuItem<String>> _buildItemOptionMenu(ItemEntity item) {
+  List<PopupMenuItem<String>> _buildListItemOptionMenu(ItemEntity item) {
     return <PopupMenuItem<String>>[
       PopupMenuItem<String>(
         child: const Text('Editar'),
@@ -233,7 +247,7 @@ class _ItemsListState extends State<ItemsList> {
     );
   }
 
-  Widget? _buildBack() {
+  Widget? _buildAppBarBack() {
     if (_currentParent.id != -1 || _itemsSelected.isNotEmpty) {
       return IconButton(
         icon: Icon(Icons.arrow_back),
@@ -253,54 +267,97 @@ class _ItemsListState extends State<ItemsList> {
         crossAxisAlignment: CrossAxisAlignment.end,
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: <Widget>[
-          for (var parent in _parentPath)
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 2.0, vertical: 5.0),
-              child: GestureDetector(
-                child: ElevatedButton.icon(
-                  icon: (parent.id == -1) ? Icon(Icons.home, color: Colors.grey) : parent.icon,
-                  label: Text(
-                    "${parent.name}",
-                    style: TextStyle(
-                      color: Colors.black87,
-                    ),
+          for (var parent in _parentPath) Container(
+            margin: const EdgeInsets.symmetric(horizontal: 2.0, vertical: 5.0),
+            child: GestureDetector(
+              child: ElevatedButton.icon(
+                icon: (parent.isRoot)
+                    ? Icon(Icons.home, color: (parent.id == _currentParent.id) ? Colors.white : Colors.grey)
+                    : parent.getIcon((parent.id == _currentParent.id) ? Colors.white : Colors.grey),
+                label: Text(
+                  "${parent.name}",
+                  style: TextStyle(
+                    color: Colors.black87,
                   ),
-                  style: ButtonStyle(
-                    padding: MaterialStateProperty.all<EdgeInsetsGeometry>(EdgeInsets.symmetric(horizontal: 15.0)),
-                    backgroundColor: MaterialStateProperty.all<Color>((parent.id == _currentParent.id) ? Colors.lightBlue.shade200 : Colors.white),
-                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                      RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(18.0),
-                        side: BorderSide(color: Colors.blue.shade200),
-                      ),
-                    ),
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _currentParent = parent;
-                    });
-                  },
                 ),
-                onLongPressEnd: (LongPressEndDetails details) {
-                  if (parent.id == -1) return;
-                  showMenu<String>(
-                    context: context,
-                    position: RelativeRect.fromLTRB(
-                        details.globalPosition.dx,
-                        details.globalPosition.dy,
-                        details.globalPosition.dx,
-                        details.globalPosition.dy
+                style: ButtonStyle(
+                  padding: MaterialStateProperty.all<EdgeInsetsGeometry>(EdgeInsets.symmetric(horizontal: 15.0)),
+                  backgroundColor: MaterialStateProperty.all<Color>((parent.id == _currentParent.id) ? Colors.lightBlue.shade200 : Colors.white),
+                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                    RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18.0),
+                      side: BorderSide(color: Colors.blue.shade200),
                     ),
-                    items: _buildItemOptionMenu(parent),
-                  ).then((String? value) {
-                    _onItemOptionSelected(parent, value!);
+                  ),
+                ),
+                onPressed: () {
+                  setState(() {
+                    _changeFolder(parent);
                   });
                 },
-              )
+              ),
+              onLongPressEnd: (LongPressEndDetails details) {
+                if (parent.isRoot) return;
+                showMenu<String>(
+                  context: context,
+                  position: RelativeRect.fromLTRB(
+                      details.globalPosition.dx,
+                      details.globalPosition.dy,
+                      details.globalPosition.dx,
+                      details.globalPosition.dy
+                  ),
+                  items: _buildListItemOptionMenu(parent),
+                ).then((String? value) {
+                  _onItemOptionSelected(parent, value!);
+                });
+              },
             )
+          )
         ],
       ),
     );
+  }
+
+  Widget? _buildBottomNavigationBar() {
+    if (_selectingFolderToMoveItems) {
+      return Container(
+        height: 50.0,
+        child: ElevatedButton.icon(
+          icon: Icon(Icons.check),
+          label: Text("Mover itens para cá"),
+          onPressed: _moveSelectedItems,
+          style: ButtonStyle(
+            shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+              RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(0.0),
+              ),
+            ),
+          ),
+        ),
+      );
+    } else {
+      return null;
+    }
+  }
+
+  // listeners
+  Future<bool> _onBackPressed() async {
+    bool finishApp = _parentPath.length == 1 && _itemsSelected.isEmpty;
+    if (_selectingFolderToMoveItems) {
+      setState(() {
+        _selectingFolderToMoveItems = false;
+      });
+    } else if (_itemsSelected.isNotEmpty) {
+      setState(() {
+        _itemsSelected.clear();
+      });
+    } else if (!finishApp) {
+      setState(() {
+        _parentPath.removeLast();
+        _currentParent = _parentPath.last;
+      });
+    }
+    return finishApp;
   }
 
   void _onItemOptionSelected(ItemEntity item, String value) {
@@ -319,24 +376,6 @@ class _ItemsListState extends State<ItemsList> {
     }
   }
 
-  void _changeFolder(ItemEntity newParent) {
-    if (!_parentPath.any((element) => element.id == newParent.id)) {
-      _updateHeader(_currentParent.id);
-      _parentPath.add(newParent);
-    }
-    _currentParent = newParent;
-    BlocProvider.of<ItemBloc>(context).add(ListItemEvent(newParent.id!));
-  }
-
-  void _updateHeader(int? removeStartId, {bool removeInclude = false}) {
-    if (removeStartId != null) {
-      int index = _parentPath.indexWhere((element) => element.id == removeStartId);
-      if (index >= 0) {
-        _parentPath.removeRange((removeInclude) ? index : index + 1, _parentPath.length);
-      }
-    }
-  }
-
   // actions
   Future<void> _addItem() async {
     await Navigator.of(context).pushNamed('/item',
@@ -350,11 +389,14 @@ class _ItemsListState extends State<ItemsList> {
 
   Future<void> _deleteItem(ItemEntity item) async {
     try {
-      await BlocProvider.of<ItemBloc>(context).delete(item);
-      showSnack("Item ${item.name} deletado com sucesso",
-          actionText: "Desfazer", actionClicked: () async {
-        await BlocProvider.of<ItemBloc>(context).insert(item);
-      });
+      await itemBloc.delete(item);
+      showSnack(
+        "Item ${item.name} deletado com sucesso",
+        actionText: "Desfazer",
+        actionClicked: () async {
+          await itemBloc.insert(item);
+        },
+      );
     } catch (e) {
       showSnack("Erro ao deletar o item ${item.name}");
     }
@@ -370,8 +412,15 @@ class _ItemsListState extends State<ItemsList> {
         .pushNamed('/folder', arguments: CreateEditFolderArgs(folder: item));
   }
 
-  Future<int?> showFolderNotEmptyAlert(ItemEntity folder, ItemEntity? parentFolder, List<ItemEntity> children) async {
-    String message = "A categoria ${folder.name} contém alguns itens como ${children.take(3).map((e) => e.name).join(", ")}. O que deseja fazer?";
+  Future<int?> _showFolderNotEmptyAlert(
+      ItemEntity folder,
+      ItemEntity? pParentFolder,
+      List<ItemEntity> children,
+    ) async {
+    var parentFolder = pParentFolder ?? ItemEntity.root();
+    String message = "A categoria ${folder.name} contém alguns itens como "
+        "${children.take(3).map((e) => e.name).join(", ")}. "
+        "O que deseja fazer?";
 
     return showDialog<int?>(
       context: context,
@@ -382,11 +431,17 @@ class _ItemsListState extends State<ItemsList> {
           content: Text(message),
           actions: <Widget>[
             TextButton(
-              child: Text("Mover items para categoria ${parentFolder?.name ?? "Principal"}"),
+              child: Text("Mover items para categoria ${parentFolder.name}"),
               onPressed: () => Navigator.of(context).pop(1),
             ),
             TextButton(
-              child: Text("Excluir Tudo", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+              child: Text(
+                "Excluir Tudo",
+                style: TextStyle(
+                  color: Colors.red,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               onPressed: () => Navigator.of(context).pop(2),
             ),
           ],
@@ -397,13 +452,17 @@ class _ItemsListState extends State<ItemsList> {
 
   Future<void> _deleteFolder(ItemEntity folder) async {
     try {
-      ItemEntity? parentFolder = (_parentPath.isEmpty || folder.parent == -1) ? null : _parentPath.firstWhere((element) => element.id == folder.parent);
-      List<ItemEntity> children = await BlocProvider.of<ItemBloc>(context).list(folder.id!);
+      ItemEntity? parentFolder = (_parentPath.isEmpty || folder.parent == -1)
+          ? null
+          : _parentPath.firstWhere((element) => element.id == folder.parent);
+      List<ItemEntity> children = await itemBloc.list(folder.id!);
 
       if (children.isNotEmpty) {
-        int response = await showFolderNotEmptyAlert(folder, parentFolder, children) ?? 0;
+        int response = await _showFolderNotEmptyAlert(
+            folder, parentFolder, children) ?? 0;
         if (response == 1) {
-          await BlocProvider.of<ItemBloc>(context).changeParent(parentFolder?.id ?? -1, folder.id!);
+          await itemBloc.changeParent(
+              parentFolder?.id ?? -1, folder.id!);
         } else if (response == 2) {
           // TODO: eliminar resíduos de todos os descendentes dessa pasta
         } else {
@@ -411,27 +470,59 @@ class _ItemsListState extends State<ItemsList> {
         }
       }
 
-      await BlocProvider.of<ItemBloc>(context).delete(folder);
+      await itemBloc.delete(folder);
       setState(() {
         _updateHeader(folder.id, removeInclude: true);
       });
       if (_currentParent.id == folder.id) {
-        BlocProvider.of<ItemBloc>(context).add(ListItemEvent(folder.parent));
+        itemBloc.add(ListItemEvent(folder.parent));
       }
 
-      showSnack("Categoria ${folder.name} deletada com sucesso",
-          actionText: "Desfazer", actionClicked: () async {
-        await BlocProvider.of<ItemBloc>(context).insert(folder);
-      });
+      showSnack(
+        "Categoria ${folder.name} deletada com sucesso",
+        actionText: "Desfazer",
+        actionClicked: () async {
+          await itemBloc.insert(folder);
+        },
+      );
     } catch (e) {
       print(e);
       showSnack("Erro ao deletar a categoria ${folder.name}");
     }
   }
 
-  Future<void> _moveItems(int newParent) async {
-    _itemsSelected.forEach((element) async {
-      await BlocProvider.of<ItemBloc>(context).move(element.id!, newParent);
+  Future<void> _moveSelectedItems() async {
+    await _moveItems(_currentParent.id!);
+    setState(() {
+      _selectingFolderToMoveItems = false;
+      _itemsSelected.clear();
     });
   }
+
+  Future<void> _moveItems(int newParent) async {
+    _itemsSelected.forEach((element) async {
+      await itemBloc.move(element.id!, newParent);
+    });
+  }
+
+  void _changeFolder(ItemEntity newParent) {
+    if (!_parentPath.any((element) => element.id == newParent.id)) {
+      _updateHeader(_currentParent.id);
+      _parentPath.add(newParent);
+    }
+    _currentParent = newParent;
+    itemBloc.add(ListItemEvent(newParent.id!));
+  }
+
+  void _updateHeader(int? removeStartId, {bool removeInclude = false}) {
+    if (removeStartId != null) {
+      int index = _parentPath.indexWhere((element) =>
+      element.id == removeStartId);
+      if (index >= 0) {
+        _parentPath.removeRange(
+            (removeInclude) ? index : index + 1, _parentPath.length);
+      }
+    }
+  }
 }
+

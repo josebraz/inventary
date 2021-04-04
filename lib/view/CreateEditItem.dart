@@ -62,6 +62,7 @@ class _CreateEditItemState extends State<CreateEditItem> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: "take_picture",
         onPressed: _takePicture,
         tooltip: "Tirar foto",
         child: Icon(Icons.add_a_photo),
