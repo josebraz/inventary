@@ -24,7 +24,7 @@ class TakePictureScreenState extends State<TakePictureScreen> {
     super.initState();
     _initializeControllerFuture = availableCameras().then((cameras) {
       final camera = cameras[0];
-      _controller = CameraController(camera, ResolutionPreset.medium);
+      _controller = CameraController(camera, ResolutionPreset.max);
       return _controller.initialize();
     });
   }
@@ -38,29 +38,52 @@ class TakePictureScreenState extends State<TakePictureScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Tire foto do Item')),
       body: FutureBuilder<void>(
         future: _initializeControllerFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.done) {
-            return CameraPreview(_controller);
+            final size = MediaQuery.of(context).size;
+            final deviceRatio = size.width / size.height;
+            return Container(
+              color: Colors.black,
+              child: Center(
+                child: Transform.scale(
+                  scale: deviceRatio * 2,
+                  child: CameraPreview(_controller),
+                ),
+              ),
+            );
           } else {
             return Center(child: CircularProgressIndicator());
           }
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        child: Icon(Icons.camera_alt),
-        onPressed: () async {
-          try {
-            await _initializeControllerFuture;
-            final image = await _controller.takePicture();
-            Navigator.of(context).pop(image.path);
-          } catch (e) {
-            print(e);
-          }
-        },
+      bottomNavigationBar: Container(
+        height: 60.0,
+        child: ElevatedButton.icon(
+          icon: Icon(Icons.camera_alt),
+          label: Text("Tirar foto"),
+          onPressed: _takePicture,
+          style: ButtonStyle(
+            shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+              RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(0.0),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
+
+  void _takePicture() async {
+    try {
+      await _initializeControllerFuture;
+      final image = await _controller.takePicture();
+      Navigator.of(context).pop(image.path);
+    } catch (e) {
+      print(e);
+    }
+  }
+
 }

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:flutter/scheduler.dart' show timeDilation;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
@@ -57,12 +58,14 @@ class _ItemsListState extends State<ItemsList> {
 
   @override
   Widget build(BuildContext context) {
+    timeDilation = 2.0;
     return WillPopScope(
       onWillPop: _onBackPressed,
       child: Scaffold(
         appBar: AppBar(
           leading: _buildAppBarBack(),
           title: Text(title),
+          backgroundColor: (_itemsSelected.isNotEmpty) ? Colors.black54 : Colors.blue,
           actions: <Widget>[
             if (_itemsSelected.isEmpty) _buildNoSelectionAppBarActions(),
             if (_itemsSelected.isNotEmpty) _buildSelectionAppBarActions(),
@@ -193,15 +196,17 @@ class _ItemsListState extends State<ItemsList> {
       ),
       key: ValueKey(item.id),
       child: Card(
-        elevation: (isSelected) ? 10.0 : 1.0,
+        elevation: (isSelected) ? 3.0 : 1.0,
         shape: RoundedRectangleBorder(
-          side: BorderSide(color: (isSelected) ? Colors.black38 : Colors.white70,
-              width: (isSelected) ? 1.3 : 1),
+          side: BorderSide(
+            color: (isSelected) ? Colors.black38 : Colors.white70,
+            width: (isSelected) ? 1.3 : 1,
+          ),
           borderRadius: BorderRadius.circular(10),
         ),
         child: ListTile(
           leading: Hero(
-            tag: "item_picture",
+            tag: "item_picture_${item.id}",
             child: item.getIcon(),
           ),
           title: Text(item.name),
@@ -217,10 +222,14 @@ class _ItemsListState extends State<ItemsList> {
                   _itemsSelected.add(item);
                 }
               });
-            } else if (item.isFolder && !isSelected) {
-              setState(() {
-                _changeFolder(item);
-              });
+            } else if (!isSelected) {
+              if (item.isFolder) {
+                setState(() {
+                  _changeFolder(item);
+                });
+              } else {
+                _editItem(item);
+              }
             }
           },
           onLongPress: () {
@@ -269,9 +278,15 @@ class _ItemsListState extends State<ItemsList> {
   }
 
   Widget? _buildAppBarBack() {
-    if (_currentParent.id != -1 || _itemsSelected.isNotEmpty) {
+    if (_currentParent.id != -1) {
       return IconButton(
         icon: Icon(Icons.arrow_back),
+        tooltip: "Voltar",
+        onPressed: _onBackPressed,
+      );
+    } else if (_itemsSelected.isNotEmpty) {
+      return IconButton(
+        icon: Icon(Icons.clear),
         tooltip: "Voltar",
         onPressed: _onBackPressed,
       );
@@ -373,6 +388,7 @@ class _ItemsListState extends State<ItemsList> {
     if (_selectingFolderToMoveItems) {
       setState(() {
         _selectingFolderToMoveItems = false;
+        _itemsSelected.clear();
       });
     } else if (_itemsSelected.isNotEmpty) {
       setState(() {
@@ -381,7 +397,7 @@ class _ItemsListState extends State<ItemsList> {
     } else if (!finishApp) {
       setState(() {
         _parentPath.removeLast();
-        _currentParent = _parentPath.last;
+        _changeFolder(_parentPath.last);
       });
     }
     return finishApp;

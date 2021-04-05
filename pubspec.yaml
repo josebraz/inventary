@@ -74,7 +74,7 @@ flutter:
         - asset: fonts/Montserrat-LightItalic.ttf
           style: italic
           weight: 300
-        - asset: fonts/Montserrat-RegularItalic.ttf
+        - asset: fonts/Montserrat-Italic.ttf
           style: italic
           weight: 400
         - asset: fonts/Montserrat-MediumItalic.ttf
@@ -89,3 +89,6 @@ flutter:
         - asset: fonts/Montserrat-ExtraBoldItalic.ttf
           style: italic
           weight: 800
+
+  assets:
+    - assets/

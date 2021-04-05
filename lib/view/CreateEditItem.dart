@@ -42,15 +42,12 @@ class _CreateEditItemState extends State<CreateEditItem> {
       appBar: AppBar(
         title: Text(widget.title),
       ),
-      body: Padding(
-        padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-        child: _buildForm(),
-      ),
+      body: _buildForm(),
       bottomNavigationBar: Container(
         height: 50.0,
         child: ElevatedButton.icon(
           icon: Icon(Icons.save),
-          label: Text((_item.id == null) ? "Salvar novo item" : "Salvar alterações"),
+          label: Text("Salvar"),
           onPressed: _save,
           style: ButtonStyle(
             shape: MaterialStateProperty.all<RoundedRectangleBorder>(
@@ -61,12 +58,6 @@ class _CreateEditItemState extends State<CreateEditItem> {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        heroTag: "take_picture",
-        onPressed: _takePicture,
-        tooltip: "Tirar foto",
-        child: Icon(Icons.add_a_photo),
-      ),
     );
   }
 
@@ -76,83 +67,108 @@ class _CreateEditItemState extends State<CreateEditItem> {
       child: SingleChildScrollView(
         child: Column(
           children: <Widget>[
-            TextFormField(
-              initialValue: _item.name,
-              keyboardType: TextInputType.name,
-              minLines: 1,
-              maxLines: 1,
-              decoration: const InputDecoration(
-                icon: Icon(Icons.drive_file_rename_outline),
-                hintText: 'Qual nome do novo Item?',
-                labelText: 'Nome *',
-              ),
-              validator: (String? value) {
-                return (value != null && value.isEmpty)
-                    ? 'Preencha o campo de nome'
-                    : null;
-              },
-              onSaved: (String? value) {
-                _item.name = value ?? "";
-              },
+            Container(
+              height: 224.0,
+              width: double.infinity,
+              child: Stack(
+                children: [
+                  _buildItemImage(),
+                  Align(
+                    alignment: Alignment.bottomRight,
+                    child: Padding(
+                      padding: EdgeInsets.only(right: 15.0),
+                      child: FloatingActionButton(
+                        heroTag: "take_picture",
+                        onPressed: _takePicture,
+                        tooltip: "Tirar foto",
+                        elevation: 5.0,
+                        child: Icon(Icons.add_a_photo),
+                      ),
+                    )
+                  )
+                ],
+              )
             ),
-            SizedBox(height: 5),
-            TextFormField(
-              initialValue: _item.description,
-              keyboardType: TextInputType.multiline,
-              minLines: 1,
-              maxLines: 5,
-              decoration: const InputDecoration(
-                icon: Icon(Icons.description),
-                hintText: 'Qual descrição do novo Item?',
-                labelText: 'Descrição (opcional)',
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                children: [
+                  TextFormField(
+                    initialValue: _item.name,
+                    keyboardType: TextInputType.name,
+                    minLines: 1,
+                    maxLines: 1,
+                    decoration: const InputDecoration(
+                      icon: Icon(Icons.drive_file_rename_outline),
+                      hintText: 'Qual nome do novo Item?',
+                      labelText: 'Nome *',
+                    ),
+                    validator: (String? value) {
+                      return (value != null && value.isEmpty)
+                          ? 'Preencha o campo de nome'
+                          : null;
+                    },
+                    onSaved: (String? value) {
+                      _item.name = value ?? "";
+                    },
+                  ),
+                  SizedBox(height: 5),
+                  TextFormField(
+                    initialValue: _item.description,
+                    keyboardType: TextInputType.multiline,
+                    minLines: 1,
+                    maxLines: 5,
+                    decoration: const InputDecoration(
+                      icon: Icon(Icons.description),
+                      hintText: 'Qual descrição do novo Item?',
+                      labelText: 'Descrição (opcional)',
+                    ),
+                    validator: (String? value) {
+                      return null;
+                    },
+                    onSaved: (String? value) {
+                      _item.description = value ?? "";
+                    },
+                  ),
+                  SizedBox(height: 5),
+                  TextFormField(
+                    initialValue: _item.location,
+                    keyboardType: TextInputType.text,
+                    minLines: 1,
+                    maxLines: 1,
+                    decoration: const InputDecoration(
+                      icon: Icon(Icons.my_location_sharp),
+                      hintText: 'Qual localização do novo Item?',
+                      labelText: 'Localização (opcional)',
+                    ),
+                    validator: (String? value) {
+                      return null;
+                    },
+                    onSaved: (String? value) {
+                      _item.location = value ?? "";
+                    },
+                  ),
+                  SizedBox(height: 5),
+                  TextFormField(
+                    initialValue: _item.loan,
+                    keyboardType: TextInputType.text,
+                    minLines: 1,
+                    maxLines: 1,
+                    decoration: const InputDecoration(
+                      icon: Icon(Icons.supervised_user_circle_sharp),
+                      hintText: 'O item está emprestado para alguém?',
+                      labelText: 'Emprestado para (opcional)',
+                    ),
+                    validator: (String? value) {
+                      return null;
+                    },
+                    onSaved: (String? value) {
+                      _item.loan = value ?? "";
+                    },
+                  ),
+                  SizedBox(height: 5),
+                ],
               ),
-              validator: (String? value) {
-                return null;
-              },
-              onSaved: (String? value) {
-                _item.description = value ?? "";
-              },
-            ),
-            SizedBox(height: 5),
-            TextFormField(
-              initialValue: _item.location,
-              keyboardType: TextInputType.text,
-              minLines: 1,
-              maxLines: 1,
-              decoration: const InputDecoration(
-                icon: Icon(Icons.my_location_sharp),
-                hintText: 'Qual localização do novo Item?',
-                labelText: 'Localização (opcional)',
-              ),
-              validator: (String? value) {
-                return null;
-              },
-              onSaved: (String? value) {
-                _item.location = value ?? "";
-              },
-            ),
-            SizedBox(height: 5),
-            TextFormField(
-              initialValue: _item.loan,
-              keyboardType: TextInputType.text,
-              minLines: 1,
-              maxLines: 1,
-              decoration: const InputDecoration(
-                icon: Icon(Icons.supervised_user_circle_sharp),
-                hintText: 'O item está emprestado para alguém?',
-                labelText: 'Emprestado para (opcional)',
-              ),
-              validator: (String? value) {
-                return null;
-              },
-              onSaved: (String? value) {
-                _item.loan = value ?? "";
-              },
-            ),
-            SizedBox(height: 5),
-            if (_imagesList.length > 0) Hero(
-              tag: "item_picture",
-              child: Image.file(File(_imagesList.first!)),
             ),
           ],
         ),
@@ -160,11 +176,37 @@ class _CreateEditItemState extends State<CreateEditItem> {
     );
   }
 
+  Widget _buildItemImage() {
+    if (_imagesList.isEmpty) {
+      return Hero(
+        tag: "item_picture_${_item.id}",
+        child: Image.asset(
+          "assets/images.png",
+          fit: BoxFit.fitWidth,
+          height: 200,
+          width: double.infinity,
+        )
+      );
+    } else {
+      return Hero(
+        tag: "item_picture_${_item.id}",
+        child: Image.file(
+          File(_imagesList.first!),
+          fit: BoxFit.fitWidth,
+          height: 200,
+          width: double.infinity,
+        ),
+      );
+    }
+  }
+
   void _takePicture() async {
-    var imagePath = await Navigator.of(context).pushNamed('/takepicture');
-    setState(() {
-      _imagesList.add(imagePath as String?);
-    });
+    var imagePath = await Navigator.of(context).pushNamed('/takepicture') as String?;
+    if (imagePath != null) {
+      setState(() {
+        _imagesList = [imagePath];
+      });
+    }
   }
 
   void _save() {

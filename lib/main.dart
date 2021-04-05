@@ -50,8 +50,8 @@ class MyApp extends StatelessWidget {
               return MaterialPageRoute(
                 builder: (context) {
                   return CreateEditItem(
-                    title: args!.item != null ? 'Editar ${args.item!.name}' : 'Criar item',
-                    startItem: args.item ?? ItemEntity(id: null, name: "", parent: args.parentItemId ?? -1),
+                    title: args?.item != null ? 'Editar ${args?.item?.name}' : 'Criar item',
+                    startItem: args?.item ?? ItemEntity(id: null, name: "", parent: args?.parentItemId ?? -1),
                   );
                 }
               );
