@@ -363,7 +363,7 @@ class _ItemsListState extends State<ItemsList> {
   Widget? _buildBottomNavigationBar() {
     if (_selectingFolderToMoveItems) {
       return Container(
-        height: 50.0,
+        height: 60.0,
         child: ElevatedButton.icon(
           icon: Icon(Icons.check),
           label: Text("Mover itens para cá"),

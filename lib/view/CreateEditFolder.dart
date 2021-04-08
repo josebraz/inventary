@@ -43,7 +43,7 @@ class _CreateEditFolderState extends State<CreateEditFolder> {
         child: _buildForm(),
       ),
       bottomNavigationBar: Container(
-        height: 50.0,
+        height: 60.0,
         child: ElevatedButton.icon(
           icon: Icon(Icons.save),
           label: Text((_item.id == null) ? "Salvar nova categoria" : "Salvar alterações"),

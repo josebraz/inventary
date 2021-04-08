@@ -4,12 +4,8 @@ import 'package:flutter/widgets.dart';
 
 
 class TakePictureScreen extends StatefulWidget {
-  final String? title;
 
-  const TakePictureScreen({
-    Key? key,
-    this.title,
-  }) : super(key: key);
+  const TakePictureScreen({Key? key}) : super(key: key);
 
   @override
   TakePictureScreenState createState() => TakePictureScreenState();
@@ -38,6 +34,12 @@ class TakePictureScreenState extends State<TakePictureScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
+      extendBodyBehindAppBar: true,
       body: FutureBuilder<void>(
         future: _initializeControllerFuture,
         builder: (context, snapshot) {
@@ -79,8 +81,12 @@ class TakePictureScreenState extends State<TakePictureScreen> {
   void _takePicture() async {
     try {
       await _initializeControllerFuture;
-      final image = await _controller.takePicture();
-      Navigator.of(context).pop(image.path);
+      final imagePath = await _controller.takePicture();
+      var croppedImagePath = await Navigator.of(context)
+          .pushNamed('/editpicture', arguments: imagePath.path) as String?;
+      if (croppedImagePath != null) {
+        Navigator.of(context).pop(croppedImagePath);
+      }
     } catch (e) {
       print(e);
     }

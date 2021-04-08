@@ -7,6 +7,7 @@ import 'package:inventary/model/ItemEntity.dart';
 import 'package:inventary/repository/ItemRepository.dart';
 import 'package:inventary/view/CreateEditFolder.dart';
 import 'package:inventary/view/CreateEditItem.dart';
+import 'package:inventary/view/EditPictureScreen.dart';
 import 'package:inventary/view/ItemsList.dart';
 import 'package:inventary/view/TakePictureScreen.dart';
 
@@ -17,6 +18,7 @@ void main() async {
 
 ThemeData theme = ThemeData(
   primaryColor: Colors.blue,
+  primaryColorDark: Colors.blueGrey,
   backgroundColor: Colors.white10,
   fontFamily: 'PTSans',
 );
@@ -68,7 +70,12 @@ class MyApp extends StatelessWidget {
               );
             case '/takepicture':
               return MaterialPageRoute(
-                  builder: (context) => TakePictureScreen(title: 'Editar item')
+                  builder: (context) => TakePictureScreen()
+              );
+            case '/editpicture':
+              final String? imagePath = settings.arguments as String?;
+              return MaterialPageRoute(
+                  builder: (context) => EditPictureScreen(imagePath)
               );
             default:
               return null;

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:inventary/bloc/ItemBloc.dart';
@@ -44,7 +45,7 @@ class _CreateEditItemState extends State<CreateEditItem> {
       ),
       body: _buildForm(),
       bottomNavigationBar: Container(
-        height: 50.0,
+        height: 60.0,
         child: ElevatedButton.icon(
           icon: Icon(Icons.save),
           label: Text("Salvar"),
@@ -68,7 +69,7 @@ class _CreateEditItemState extends State<CreateEditItem> {
         child: Column(
           children: <Widget>[
             Container(
-              height: 224.0,
+              height: 274.0,
               width: double.infinity,
               child: Stack(
                 children: [
@@ -183,7 +184,7 @@ class _CreateEditItemState extends State<CreateEditItem> {
         child: Image.asset(
           "assets/images.png",
           fit: BoxFit.fitWidth,
-          height: 200,
+          height: 250,
           width: double.infinity,
         )
       );
@@ -193,7 +194,7 @@ class _CreateEditItemState extends State<CreateEditItem> {
         child: Image.file(
           File(_imagesList.first!),
           fit: BoxFit.fitWidth,
-          height: 200,
+          height: 250,
           width: double.infinity,
         ),
       );
