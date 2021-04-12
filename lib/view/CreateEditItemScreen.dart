@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
@@ -15,24 +16,24 @@ class CreateEditItemArgs {
   CreateEditItemArgs({this.parentItemId, this.item});
 }
 
-class CreateEditItem extends StatefulWidget {
-  CreateEditItem({Key? key, required this.title, required this.startItem})
+class CreateEditItemScreen extends StatefulWidget {
+  CreateEditItemScreen({Key? key, required this.title, required this.startItem})
       : super(key: key);
 
   final String title;
   final ItemEntity startItem;
 
   @override
-  _CreateEditItemState createState() => _CreateEditItemState(startItem);
+  _CreateEditItemScreenState createState() => _CreateEditItemScreenState(startItem);
 }
 
-class _CreateEditItemState extends State<CreateEditItem> {
+class _CreateEditItemScreenState extends State<CreateEditItemScreen> {
   final _formKey = GlobalKey<FormState>();
 
   late List<String?> _imagesList;
   late ItemEntity _item;
 
-  _CreateEditItemState(ItemEntity startItem) {
+  _CreateEditItemScreenState(ItemEntity startItem) {
     this._item = startItem;
     this._imagesList = _item.attachmentsPath.map((e) => e).toList();
   }
@@ -43,7 +44,7 @@ class _CreateEditItemState extends State<CreateEditItem> {
       appBar: AppBar(
         title: Text(widget.title),
       ),
-      body: _buildForm(),
+      body: _buildForm(context),
       bottomNavigationBar: Container(
         height: 60.0,
         child: ElevatedButton.icon(
@@ -62,7 +63,7 @@ class _CreateEditItemState extends State<CreateEditItem> {
     );
   }
 
-  Widget _buildForm() {
+  Widget _buildForm(BuildContext context) {
     return Form(
       key: _formKey,
       child: SingleChildScrollView(
@@ -80,7 +81,9 @@ class _CreateEditItemState extends State<CreateEditItem> {
                       padding: EdgeInsets.only(right: 15.0),
                       child: FloatingActionButton(
                         heroTag: "take_picture",
-                        onPressed: _takePicture,
+                        onPressed: () {
+                          _pictureOptions(context);
+                        },
                         tooltip: "Tirar foto",
                         elevation: 5.0,
                         child: Icon(Icons.add_a_photo),
@@ -208,6 +211,42 @@ class _CreateEditItemState extends State<CreateEditItem> {
         _imagesList = [imagePath];
       });
     }
+  }
+
+  void _selectFile() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['jpg', 'png', 'gif'],
+    );
+    if(result != null) {
+      setState(() {
+        _imagesList = [result.files.single.path];
+      });
+    }
+  }
+
+  void _pictureOptions(BuildContext context){
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext bc) {
+        return Container(
+          child: new Wrap(
+            children: <Widget>[
+              new ListTile(
+                  leading: new Icon(Icons.file_upload),
+                  title: new Text('Selecionar arquivo'),
+                  onTap: _selectFile
+              ),
+              new ListTile(
+                leading: new Icon(Icons.camera_alt_rounded),
+                title: new Text('Tirar foto'),
+                onTap: _takePicture,
+              ),
+            ],
+          ),
+        );
+      }
+    );
   }
 
   void _save() {

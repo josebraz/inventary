@@ -30,6 +30,8 @@ dependencies:
   path:
   flutter_bloc:
   image_crop: ^0.4.0
+  backdrop: ^0.6.0
+  file_picker: ^3.0.1
 
 
   # The following adds the Cupertino Icons font to your application.

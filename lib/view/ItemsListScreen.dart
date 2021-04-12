@@ -12,18 +12,17 @@ import 'package:inventary/bloc/state/ItemState.dart';
 import 'package:inventary/model/ItemEntity.dart';
 import 'package:inventary/extensions/StateExtension.dart';
 import 'package:inventary/extensions/StringExtension.dart';
-import 'package:inventary/view/CreateEditFolder.dart';
-import 'package:inventary/view/CreateEditItem.dart';
-import 'package:inventary/view/ItemsSearshDelegate.dart';
+import 'package:inventary/view/CreateEditFolderScreen.dart';
+import 'package:inventary/view/CreateEditItemScreen.dart';
 
-class ItemsList extends StatefulWidget {
-  ItemsList({Key? key}) : super(key: key);
+class ItemsListScreen extends StatefulWidget {
+  ItemsListScreen({Key? key}) : super(key: key);
 
   @override
-  _ItemsListState createState() => _ItemsListState();
+  _ItemsListScreenState createState() => _ItemsListScreenState();
 }
 
-class _ItemsListState extends State<ItemsList> {
+class _ItemsListScreenState extends State<ItemsListScreen> {
 
   late List<ItemEntity> _parentPath;
   late ItemEntity _currentParent;
@@ -98,7 +97,7 @@ class _ItemsListState extends State<ItemsList> {
       icon: Icon(Icons.search),
       tooltip: "Pesquisar",
       onPressed: () {
-        showSearch(context: context, delegate: ItemsSearchDelegate());
+        Navigator.of(context).pushNamed('/search');
       },
     );
   }
