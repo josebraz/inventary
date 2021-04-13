@@ -16,7 +16,11 @@ class ItemDAO extends EntityDAO<ItemEntity> {
 
   Future<List<ItemEntity>> search(String name) async {
     final Database db = await database;
-    final List<Map<String, dynamic>> maps = await db.query(tableName, where: "name LIKE ?", whereArgs: ['%$name%']);
+    final List<Map<String, dynamic>> maps = await db.query(
+        tableName,
+        where: "name LIKE ? COLLATE NOCASE",
+        whereArgs: ['%$name%']
+    );
     return List.generate(maps.length, (i) {
       return create(maps[i]);
     });
