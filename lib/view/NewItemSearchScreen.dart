@@ -16,7 +16,7 @@ import 'package:inventary/extensions/StateExtension.dart';
 
 class NewItemSearchScreen extends StatefulWidget {
 
-  final startWithFilter = true;
+  final startWithFilter = false;
 
   const NewItemSearchScreen({Key? key}) : super(key: key);
 
@@ -73,9 +73,9 @@ class NewItemSearchScreenState extends State<NewItemSearchScreen> {
 
   PreferredSizeWidget _buildAppBar() {
     return BackdropAppBar(
-      leading: (_filterOpen) ? BackButton() : null,
+      leading: BackButton(),
       automaticallyImplyLeading: false,
-      title: Text((_filterOpen) ? "Editar filtros" : "Resultado da Pesquisa"),
+      title: (_filterOpen) ? Text("Editar filtros") : _buildSearchField(),
       actions: <Widget>[
         SearchBackdropToggleButton(
           onSearch: _searchQuery,
@@ -83,6 +83,32 @@ class NewItemSearchScreenState extends State<NewItemSearchScreen> {
       ],
     );
   }
+
+  Widget _buildSearchField() {
+    return Theme(
+      data: Theme.of(context).copyWith(
+        primaryColor: Colors.white,
+      ),
+      child: TextField(
+        controller: _searchQueryController,
+        autofocus: true,
+        cursorColor: Colors.white,
+        decoration: InputDecoration(
+          hintText: "Pesquisar por nome...",
+          border: InputBorder.none,
+          hintStyle: TextStyle(color: Colors.white30),
+        ),
+        style: TextStyle(color: Colors.white, fontSize: 16.0),
+        onChanged: (query) {
+          setState(() {
+            _nameFilter = query;
+            _searchQuery();
+          });
+        },
+      ),
+    );
+  }
+
 
   // void _clearSearchQuery() {
   //   setState(() {
@@ -371,12 +397,12 @@ class SearchBackdropToggleButton extends StatelessWidget {
             onSearch?.call();
           },
           child: Text(
-            "FILTRAR",
+            "PESQUISAR",
             style: TextStyle(color: Colors.white),
           ),
         )
       : IconButton(
-          icon: Icon(Icons.search),
+          icon: Icon(Icons.filter_list),
           color: Colors.white,
           onPressed: () {
             Backdrop.of(context).fling();
