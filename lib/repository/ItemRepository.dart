@@ -24,8 +24,14 @@ class ItemRepository {
     return itemDAO.list(parent);
   }
 
-  Future<List<ItemEntity>> search(String filter) {
-    return itemDAO.search(filter);
+  Future<List<ItemEntity>> search({
+    required String nameFilter,
+    required bool nameFilterAsc,
+  }) {
+    return itemDAO.search(
+      nameFilter: nameFilter,
+      nameFilterAsc: nameFilterAsc,
+    );
   }
 
   Future<void> changeParent(int to, int from) {
@@ -34,6 +40,14 @@ class ItemRepository {
 
   Future<void> move(int id, int newParent) {
     return itemDAO.move(id, newParent);
+  }
+
+  Future<List<ItemEntity>> listRootFolders() {
+    return itemDAO.listRootFolders();
+  }
+
+  Future<List<String>> listFriends() {
+    return itemDAO.listFriends();
   }
 
 }

@@ -4,8 +4,14 @@ import 'package:inventary/model/ItemEntity.dart';
 abstract class ItemEvent{}
 
 class SearchTextChangedItemEvent extends ItemEvent {
-  final String searchTerm;
-  SearchTextChangedItemEvent(this.searchTerm);
+
+  final String nameFilter;
+  final bool nameFilterAsc;
+
+  SearchTextChangedItemEvent({
+    required this.nameFilter,
+    this.nameFilterAsc = true
+  });
 }
 
 class CreateItemEvent extends ItemEvent {

@@ -14,12 +14,16 @@ class ItemDAO extends EntityDAO<ItemEntity> {
     return ItemEntity.fromMap(map);
   }
 
-  Future<List<ItemEntity>> search(String name) async {
+  Future<List<ItemEntity>> search({
+    required String nameFilter,
+    required bool nameFilterAsc,
+  }) async {
     final Database db = await database;
     final List<Map<String, dynamic>> maps = await db.query(
         tableName,
         where: "name LIKE ? COLLATE NOCASE",
-        whereArgs: ['%$name%']
+        whereArgs: ['%$nameFilter%'],
+        orderBy: "name ${(nameFilterAsc) ? 'ASC' : 'DESC'}",
     );
     return List.generate(maps.length, (i) {
       return create(maps[i]);
@@ -52,6 +56,31 @@ class ItemDAO extends EntityDAO<ItemEntity> {
       where: "id = ?",
       whereArgs: [id]
     );
+  }
+
+  Future<List<ItemEntity>> listRootFolders() async {
+    final Database db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      tableName,
+      where: "isFolder = 1 AND parent = -1",
+      orderBy: "name",
+    );
+    return List.generate(maps.length, (i) {
+      return create(maps[i]);
+    });
+  }
+
+  Future<List<String>> listFriends() async {
+    final Database db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      tableName,
+      distinct: true,
+      columns: ["loan"],
+      where: "loan IS NOT NULL AND loan != ''",
+    );
+    return List.generate(maps.length, (i) {
+      return maps[i]["loan"];
+    });
   }
 
 }

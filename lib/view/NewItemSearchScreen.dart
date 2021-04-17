@@ -1,6 +1,5 @@
-
-
 import 'package:backdrop/backdrop.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:inventary/bloc/ItemBloc.dart';
@@ -13,10 +12,9 @@ import 'package:inventary/view/CreateEditItemScreen.dart';
 import 'package:inventary/extensions/StringExtension.dart';
 import 'package:inventary/extensions/StateExtension.dart';
 
-
 class NewItemSearchScreen extends StatefulWidget {
-
   final startWithFilter = false;
+  final startNameFilterAsc = true;
 
   const NewItemSearchScreen({Key? key}) : super(key: key);
 
@@ -25,12 +23,17 @@ class NewItemSearchScreen extends StatefulWidget {
 }
 
 class NewItemSearchScreenState extends State<NewItemSearchScreen> {
-
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   final _formKey = GlobalKey<FormState>();
   final _searchQueryController = TextEditingController();
 
+  late Future<List<ItemEntity>> _folderList;
+  late Future<List<String>> _friendsList;
+  List<int> _markedFolderList = [];
+  List<String> _markedFriendList = [];
+
   late bool _filterOpen;
+  late bool _nameFilterAsc;
 
   // filtros
   String _nameFilter = "";
@@ -40,6 +43,10 @@ class NewItemSearchScreenState extends State<NewItemSearchScreen> {
     super.initState();
 
     _filterOpen = widget.startWithFilter;
+    _nameFilterAsc = widget.startNameFilterAsc;
+
+    _folderList = itemSearchBloc.itemRepository.listRootFolders();
+    _friendsList = itemSearchBloc.itemRepository.listFriends();
   }
 
   @override
@@ -47,12 +54,13 @@ class NewItemSearchScreenState extends State<NewItemSearchScreen> {
     return BackdropScaffold(
       key: _scaffoldKey,
       appBar: _buildAppBar(),
-      backLayer:  _buildFilters(),
+      backLayer: _buildFilters(),
       onBackLayerConcealed: () {
         setState(() {
           _filterOpen = false;
         });
       },
+      backLayerScrim: Colors.white,
       onBackLayerRevealed: () {
         setState(() {
           _filterOpen = true;
@@ -63,11 +71,10 @@ class NewItemSearchScreenState extends State<NewItemSearchScreen> {
         title: Text("Resultado da pesquisa"),
       ),
       frontLayer: BlocBuilder<ItemSearchBloc, ItemState>(
-        bloc: BlocProvider.of<ItemSearchBloc>(context),
-        builder: (context, state) {
-          return _buildList(context, state);
-        }
-      ),
+          bloc: BlocProvider.of<ItemSearchBloc>(context),
+          builder: (context, state) {
+            return _buildList(context, state);
+          }),
     );
   }
 
@@ -109,7 +116,6 @@ class NewItemSearchScreenState extends State<NewItemSearchScreen> {
     );
   }
 
-
   // void _clearSearchQuery() {
   //   setState(() {
   //     _searchQueryController.clear();
@@ -120,6 +126,7 @@ class NewItemSearchScreenState extends State<NewItemSearchScreen> {
   // }
 
   ItemBloc get itemBloc => BlocProvider.of<ItemBloc>(context);
+  ItemSearchBloc get itemSearchBloc => BlocProvider.of<ItemSearchBloc>(context);
 
   Widget _buildList(BuildContext context, ItemState state) {
     if (state is ItemFetchingState) {
@@ -265,10 +272,10 @@ class NewItemSearchScreenState extends State<NewItemSearchScreen> {
   }
 
   Future<int?> _showFolderNotEmptyAlert(
-      ItemEntity folder,
-      ItemEntity? pParentFolder,
-      List<ItemEntity> children,
-      ) async {
+    ItemEntity folder,
+    ItemEntity? pParentFolder,
+    List<ItemEntity> children,
+  ) async {
     var parentFolder = pParentFolder ?? ItemEntity.root();
     String message = "A categoria ${folder.name} contém alguns itens como "
         "${children.take(3).map((e) => e.name).join(", ")}. "
@@ -308,8 +315,8 @@ class NewItemSearchScreenState extends State<NewItemSearchScreen> {
       List<ItemEntity> children = await itemBloc.list(folder.id!);
 
       if (children.isNotEmpty) {
-        int response = await _showFolderNotEmptyAlert(
-            folder, parentFolder, children) ?? 0;
+        int response =
+            await _showFolderNotEmptyAlert(folder, parentFolder, children) ?? 0;
         if (response == 1) {
           await itemBloc.changeParent(parentFolder?.id ?? -1, folder.id!);
         } else if (response == 2) {
@@ -335,11 +342,10 @@ class NewItemSearchScreenState extends State<NewItemSearchScreen> {
   }
 
   void _searchQuery() {
-    BlocProvider.of<ItemSearchBloc>(context).add(
-      SearchTextChangedItemEvent(
-        _nameFilter
-      )
-    );
+    BlocProvider.of<ItemSearchBloc>(context).add(SearchTextChangedItemEvent(
+      nameFilter: _nameFilter,
+      nameFilterAsc: _nameFilterAsc,
+    ));
   }
 
   Widget _buildFilters() {
@@ -350,37 +356,369 @@ class NewItemSearchScreenState extends State<NewItemSearchScreen> {
       child: Form(
         key: _formKey,
         child: SingleChildScrollView(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20),
-            child: Column(
-              children: <Widget>[
-                TextField(
-                  controller: _searchQueryController,
-                  autofocus: true,
-                  cursorColor: Colors.white,
-                  decoration: InputDecoration(
-                    icon: Icon(Icons.drive_file_rename_outline),
-                    hintText: "Digite o nome do item",
-                    labelText: "Nome de item",
-                  ),
-                  onChanged: (query) {
-                    setState(() {
-                      _nameFilter = query;
-                    });
-                  },
-                ),
-                SizedBox(height: 5),
-              ]
-            )
-          )
-        )
+          child: Column(
+            children: <Widget>[
+              SizedBox(height: 15),
+              FilterTextField(
+                controller: _searchQueryController,
+                icon: Icons.drive_file_rename_outline,
+                hintText: "Digite o nome do item",
+                labelText: "Nome de item",
+                ascStartOrder: widget.startNameFilterAsc,
+                onChanged: (query) {
+                  setState(() {
+                    _nameFilter = query;
+                  });
+                },
+                onOrderChange: (ascOrder) {
+                  _nameFilterAsc = ascOrder;
+                },
+              ),
+              FutureBuilder<List<ItemEntity>>(
+                future: _folderList,
+                builder: (BuildContext context, AsyncSnapshot<List<ItemEntity>> snapshot) {
+                  if (!snapshot.hasData) {
+                    return CircularProgressIndicator();
+                  }
+                  if (snapshot.hasData && snapshot.requireData.isEmpty) {
+                    return SizedBox(height: 0);
+                  }
+                  return Column(
+                    children: [
+                      SizedBox(height: 15),
+                      Divider(
+                        color: Colors.blue.shade300,
+                      ),
+                      SizedBox(height: 5),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(left: 20, right: 10),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    "Filtro por categorias principais:",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 17.0,
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        _markedFolderList.clear();
+                                        print("CLICOU");
+                                      });
+                                    },
+                                    child: Text(
+                                      "LIMPAR",
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 17.0,
+                                        fontWeight: FontWeight.w400,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            SingleChildScrollView(
+                              padding: EdgeInsets.symmetric(vertical: 3.0),
+                              scrollDirection: Axis.horizontal,
+                              dragStartBehavior: DragStartBehavior.down,
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                children: <Widget>[
+                                  SizedBox(width: 15),
+                                  for (var item in snapshot.requireData)
+                                    FilterItemOption(
+                                      onChange: (bool marked) {
+                                        setState(() {
+                                          if (marked) {
+                                            _markedFolderList.add(item.id!);
+                                          } else {
+                                            _markedFolderList.removeWhere((e) => e == item.id);
+                                          }
+                                        });
+                                      },
+                                      marked: _markedFolderList.any((e) => e == item.id),
+                                      text: item.name,
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: 15),
+                    ],
+                  );
+                }
+              ),
+              FutureBuilder<List<String>>(
+                future: _friendsList,
+                builder: (BuildContext context, AsyncSnapshot<List<String>> snapshot) {
+                  if (!snapshot.hasData) {
+                    return CircularProgressIndicator();
+                  }
+                  if (snapshot.hasData && snapshot.requireData.isEmpty) {
+                    return SizedBox(height: 0);
+                  }
+                  return Column(
+                    children: [
+                      Divider(
+                        color: Colors.blue.shade300,
+                      ),
+                      SizedBox(height: 5),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(left: 20, right: 10),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    "Filtrar itens emprestados para:",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 17.0,
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        _markedFriendList.clear();
+                                      });
+                                    },
+                                    child: Text(
+                                      "LIMPAR",
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 17.0,
+                                        fontWeight: FontWeight.w400,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            SingleChildScrollView(
+                              padding: EdgeInsets.symmetric(vertical: 3.0),
+                              scrollDirection: Axis.horizontal,
+                              dragStartBehavior: DragStartBehavior.down,
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                mainAxisAlignment: MainAxisAlignment
+                                    .spaceEvenly,
+                                children: <Widget>[
+                                  SizedBox(width: 15),
+                                  for (var friend in snapshot.requireData)
+                                    FilterItemOption(
+                                      onChange: (bool marked) {
+                                        setState(() {
+                                          if (marked) {
+                                            _markedFriendList.add(friend);
+                                          } else {
+                                            _markedFriendList.removeWhere((e) => e == friend);
+                                          }
+                                        });
+                                      },
+                                      marked: _markedFriendList.contains(friend),
+                                      text: friend,
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: 15),
+                    ],
+                  );
+                },
+              ),
+              Divider(
+                color: Colors.blue.shade300,
+              ),
+              SizedBox(height: 15),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+typedef OrderChanged = void Function(bool asc);
+
+class FilterTextField extends StatefulWidget {
+  final TextEditingController? controller;
+  final IconData icon;
+  final ValueChanged<String>? onChanged;
+  final String? hintText;
+  final String? labelText;
+  final OrderChanged? onOrderChange;
+  final bool ascStartOrder;
+
+  const FilterTextField({
+    Key? key,
+    this.controller,
+    required this.icon,
+    this.onChanged,
+    this.hintText,
+    this.labelText,
+    this.onOrderChange,
+    this.ascStartOrder = true,
+  }) : super(key: key);
+
+  @override
+  FilterTextFieldState createState() => FilterTextFieldState();
+}
+
+class FilterTextFieldState extends State<FilterTextField> {
+  late bool _ascOrder;
+
+  @override
+  void initState() {
+    super.initState();
+    _ascOrder = widget.ascStartOrder;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: TextField(
+        controller: widget.controller,
+        autofocus: true,
+        cursorColor: Colors.white,
+        onChanged: widget.onChanged,
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 17.0,
+        ),
+        decoration: InputDecoration(
+          enabledBorder: UnderlineInputBorder(
+            borderSide: BorderSide(
+              color: Colors.white.withOpacity(0.5),
+            ),
+          ),
+          filled: true,
+          prefixIcon: Icon(
+            widget.icon,
+            color: Colors.white,
+          ),
+          hintStyle: TextStyle(
+            color: Colors.white70,
+          ),
+          labelStyle: TextStyle(color: Colors.white),
+          fillColor: Colors.blue.shade400.withOpacity(0.7),
+          hintText: widget.hintText,
+          labelText: widget.labelText,
+          suffixIcon: GestureDetector(
+            onTap: () {
+              setState(() {
+                _ascOrder = !_ascOrder;
+              });
+              widget.onOrderChange?.call(_ascOrder);
+            },
+            child: Padding(
+              padding: EdgeInsets.all(12.0),
+              child: Image.asset(
+                (_ascOrder)
+                    ? "assets/alpha_sort_icon.png"
+                    : "assets/reverse_alpha_sort_icon.png",
+                height: 10.0,
+                width: 10.0,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+typedef FilterMarkChanged = void Function(bool marked);
+
+class FilterItemOption extends StatefulWidget {
+
+  final String text;
+  final FilterMarkChanged onChange;
+
+
+  final textColorSelected = Colors.blue;
+  final textColorNoSelected = Colors.white;
+  final backgroundColorSelected = Colors.white;
+  final backgroundColorNoSelected =  Colors.blue.shade300;
+  final borderColor = Colors.blueAccent;
+
+  final marked;
+
+  FilterItemOption({
+    Key? key,
+    required this.text,
+    required this.onChange,
+    this.marked = false,
+  }) : super(key: key);
+
+  @override
+  FilterItemOptionState createState() => FilterItemOptionState();
+}
+
+class FilterItemOptionState extends State<FilterItemOption> {
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(right: 10.0),
+      child: GestureDetector(
+        child: ElevatedButton(
+          child: Text(
+            widget.text,
+            style: TextStyle(
+              fontFamily: "Montserrat",
+              fontWeight: FontWeight.w500,
+              color: widget.marked ? widget.textColorSelected : widget.textColorNoSelected,
+            ),
+          ),
+          style: ButtonStyle(
+            padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+                EdgeInsets.symmetric(horizontal: 15.0)),
+            backgroundColor: MaterialStateProperty.all<Color>(
+                (widget.marked) ? widget.backgroundColorSelected : widget.backgroundColorNoSelected),
+            shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+              RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18.0),
+                side: BorderSide(color: widget.borderColor),
+              ),
+            ),
+          ),
+          onPressed: () {
+            setState(() {
+              widget.onChange.call(!widget.marked);
+            });
+          },
+        ),
       ),
     );
   }
 }
 
 class SearchBackdropToggleButton extends StatelessWidget {
-
   final VoidCallback? onSearch;
 
   const SearchBackdropToggleButton({
@@ -391,23 +729,22 @@ class SearchBackdropToggleButton extends StatelessWidget {
   Widget build(BuildContext context) {
     bool isSearch = Backdrop.of(context).isBackLayerRevealed;
     return (isSearch)
-      ? TextButton(
-          onPressed: () {
-            Backdrop.of(context).fling();
-            onSearch?.call();
-          },
-          child: Text(
-            "PESQUISAR",
-            style: TextStyle(color: Colors.white),
-          ),
-        )
-      : IconButton(
-          icon: Icon(Icons.filter_list),
-          color: Colors.white,
-          onPressed: () {
-            Backdrop.of(context).fling();
-          },
-        );
+        ? TextButton(
+            onPressed: () {
+              Backdrop.of(context).fling();
+              onSearch?.call();
+            },
+            child: Text(
+              "PESQUISAR",
+              style: TextStyle(color: Colors.white),
+            ),
+          )
+        : IconButton(
+            icon: Icon(Icons.filter_list),
+            color: Colors.white,
+            onPressed: () {
+              Backdrop.of(context).fling();
+            },
+          );
   }
 }
-
