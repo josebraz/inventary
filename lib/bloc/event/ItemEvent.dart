@@ -7,10 +7,14 @@ class SearchTextChangedItemEvent extends ItemEvent {
 
   final String nameFilter;
   final bool nameFilterAsc;
+  final List<String> friendsFilter;
+  final List<int> folderFilter;
 
   SearchTextChangedItemEvent({
     required this.nameFilter,
-    this.nameFilterAsc = true
+    this.nameFilterAsc = true,
+    this.friendsFilter = const [],
+    this.folderFilter = const [],
   });
 }
 

@@ -54,7 +54,7 @@ class MyApp extends StatelessWidget {
                 builder: (context) {
                   return CreateEditItemScreen(
                     title: args?.item != null ? 'Editar ${args?.item?.name}' : 'Criar item',
-                    startItem: args?.item ?? ItemEntity(id: null, name: "", parent: args?.parentItemId ?? -1),
+                    startItem: args?.item ?? ItemEntity(id: null, isFolder: false, name: "", parent: args?.parentItem?.id ?? -1, rootParent: rootParent(args?.parentItem)),
                   );
                 }
               );
@@ -63,9 +63,8 @@ class MyApp extends StatelessWidget {
               return MaterialPageRoute(
                 builder: (context) {
                   return CreateEditFolder(
-                    title: 'Criar Categoria',
-                    startFolder: args!.folder,
-                    parentId: args.parentItemId ?? -1,
+                    title: args?.folder != null ? 'Editar ${args?.folder?.name}' : 'Criar Categoria',
+                    startFolder: args?.folder ?? ItemEntity(id: null, isFolder: true, name: "", parent: args?.parentItem?.id ?? -1, rootParent: rootParent(args?.parentItem)),
                   );
                 }
               );
@@ -88,6 +87,17 @@ class MyApp extends StatelessWidget {
         },
       ),
     );
+  }
+
+  int rootParent(ItemEntity? parent) {
+    if (parent != null) {
+      if (parent.rootParent == -1) {
+        return parent.id!;
+      } else {
+        return parent.rootParent;
+      }
+    }
+    return -1;
   }
 
 }

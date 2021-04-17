@@ -10,10 +10,10 @@ import 'package:inventary/model/ItemEntity.dart';
 import 'package:inventary/extensions/StateExtension.dart';
 
 class CreateEditItemArgs {
-  final int? parentItemId;
+  final ItemEntity? parentItem;
   final ItemEntity? item;
 
-  CreateEditItemArgs({this.parentItemId, this.item});
+  CreateEditItemArgs({this.parentItem, this.item});
 }
 
 class CreateEditItemScreen extends StatefulWidget {

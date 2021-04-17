@@ -6,21 +6,20 @@ import 'package:inventary/model/ItemEntity.dart';
 import 'package:inventary/extensions/StateExtension.dart';
 
 class CreateEditFolderArgs {
-  final int? parentItemId;
+  final ItemEntity? parentItem;
   final ItemEntity? folder;
 
-  CreateEditFolderArgs({this.parentItemId, this.folder});
+  CreateEditFolderArgs({this.parentItem, this.folder});
 }
 
 class CreateEditFolder extends StatefulWidget {
-  CreateEditFolder({Key? key, required this.title, this.startFolder, this.parentId = -1}) : super(key: key);
+  CreateEditFolder({Key? key, required this.title, required this.startFolder}) : super(key: key);
 
   final String title;
-  final int parentId;
-  final ItemEntity? startFolder;
+  final ItemEntity startFolder;
 
   @override
-  _CreateEditFolderState createState() => _CreateEditFolderState(startFolder, parentId);
+  _CreateEditFolderState createState() => _CreateEditFolderState(startFolder);
 }
 
 class _CreateEditFolderState extends State<CreateEditFolder> {
@@ -28,8 +27,9 @@ class _CreateEditFolderState extends State<CreateEditFolder> {
 
   late ItemEntity _item;
 
-  _CreateEditFolderState(ItemEntity? startItem, int parentId) {
-    this._item = startItem ?? ItemEntity(isFolder: true, parent: parentId);
+  _CreateEditFolderState(ItemEntity startFolder) {
+    this._item = startFolder;
+
   }
 
   @override

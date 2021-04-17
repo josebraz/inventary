@@ -36,7 +36,8 @@ class AppDatabase {
               loan TEXT,
               attachmentsPath TEXT,
               parent INTEGER,
-              isFolder INTEGER
+              isFolder INTEGER,
+              rootParent INTEGER
             )"""
           );
         },

@@ -13,7 +13,7 @@ class ItemEntity extends BasicItemEntity {
 
   List<String?> attachmentsPath;
 
-  ItemEntity({id, name = "", parent = -1, isFolder = false, this.location = "", this.description = "", this.loan = "", this.attachmentsPath = const []}) : super(id, name, parent, isFolder);
+  ItemEntity({id, name = "", parent = -1, rootParent = -1, isFolder = false, this.location = "", this.description = "", this.loan = "", this.attachmentsPath = const []}) : super(id, name, parent, rootParent, isFolder);
 
   factory ItemEntity.root() => ItemEntity(
     id: -1,
@@ -34,6 +34,7 @@ class ItemEntity extends BasicItemEntity {
     'attachmentsPath': json.encode(attachmentsPath),
     'parent': parent,
     'isFolder': isFolder ? 1 : 0,
+    'rootParent': rootParent,
   };
 
   static fromMap(Map<String, dynamic> map) => ItemEntity(
@@ -45,6 +46,7 @@ class ItemEntity extends BasicItemEntity {
     attachmentsPath: json.decode(map['attachmentsPath']).cast<String>(),
     parent: map['parent'],
     isFolder: map['isFolder'] != 0,
+    rootParent: map['rootParent'],
   );
 
 

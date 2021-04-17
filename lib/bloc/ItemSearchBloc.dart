@@ -24,8 +24,10 @@ class ItemSearchBloc extends Bloc<ItemEvent, ItemState> {
       if (event is SearchTextChangedItemEvent) {
         yield ItemFetchingState();
         items = await itemRepository.search(
-            nameFilter: event.nameFilter,
-            nameFilterAsc: event.nameFilterAsc,
+          nameFilter: event.nameFilter,
+          nameFilterAsc: event.nameFilterAsc,
+          friendsFilter: event.friendsFilter,
+          folderFilter: event.folderFilter,
         );
       }
       if (items.length == 0) {

@@ -3,7 +3,7 @@ import 'package:inventary/model/BaseItemEntity.dart';
 
 class FolderEntity extends BasicItemEntity {
 
-  FolderEntity({int? id, name = "", parent = -1, isFolder = true}) : super(id, name, parent, isFolder);
+  FolderEntity({int? id, name = "", parent = -1, rootParent = -1, isFolder = true}) : super(id, name, parent, rootParent, isFolder);
 
   @override
   Map<String, dynamic> toMap() => {

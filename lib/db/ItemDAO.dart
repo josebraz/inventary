@@ -17,11 +17,15 @@ class ItemDAO extends EntityDAO<ItemEntity> {
   Future<List<ItemEntity>> search({
     required String nameFilter,
     required bool nameFilterAsc,
+    required List<String> friendsFilter,
+    required List<int> folderFilter,
   }) async {
     final Database db = await database;
     final List<Map<String, dynamic>> maps = await db.query(
         tableName,
-        where: "name LIKE ? COLLATE NOCASE",
+        where: "name LIKE ? COLLATE NOCASE"
+            "${(friendsFilter.isNotEmpty) ? ' AND loan IN (${friendsFilter.map((e) => "'$e'").join(',')})' : ''}"
+            "${(folderFilter.isNotEmpty) ? ' AND rootParent IN (${folderFilter.join(',')})' : ''}",
         whereArgs: ['%$nameFilter%'],
         orderBy: "name ${(nameFilterAsc) ? 'ASC' : 'DESC'}",
     );

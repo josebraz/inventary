@@ -429,7 +429,7 @@ class _ItemsListScreenState extends State<ItemsListScreen> {
   // actions
   Future<void> _addItem() async {
     await Navigator.of(context).pushNamed('/item',
-        arguments: CreateEditItemArgs(parentItemId: _currentParent.id));
+        arguments: CreateEditItemArgs(parentItem: _currentParent));
   }
 
   Future<void> _editItem(ItemEntity item) async {
@@ -454,7 +454,7 @@ class _ItemsListScreenState extends State<ItemsListScreen> {
 
   Future<void> _addFolder() async {
     await Navigator.of(context).pushNamed('/folder',
-        arguments: CreateEditFolderArgs(parentItemId: _currentParent.id));
+        arguments: CreateEditFolderArgs(parentItem: _currentParent));
   }
 
   Future<void> _editFolder(ItemEntity item) async {

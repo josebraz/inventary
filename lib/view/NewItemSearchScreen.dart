@@ -345,6 +345,8 @@ class NewItemSearchScreenState extends State<NewItemSearchScreen> {
     BlocProvider.of<ItemSearchBloc>(context).add(SearchTextChangedItemEvent(
       nameFilter: _nameFilter,
       nameFilterAsc: _nameFilterAsc,
+      friendsFilter: _markedFriendList,
+      folderFilter: _markedFolderList,
     ));
   }
 

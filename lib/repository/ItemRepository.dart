@@ -27,10 +27,14 @@ class ItemRepository {
   Future<List<ItemEntity>> search({
     required String nameFilter,
     required bool nameFilterAsc,
+    required List<String> friendsFilter,
+    required List<int> folderFilter,
   }) {
     return itemDAO.search(
       nameFilter: nameFilter,
       nameFilterAsc: nameFilterAsc,
+      friendsFilter: friendsFilter,
+      folderFilter: folderFilter,
     );
   }
 
