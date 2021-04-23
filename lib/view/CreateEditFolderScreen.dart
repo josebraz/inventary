@@ -35,23 +35,30 @@ class _CreateEditFolderState extends State<CreateEditFolder> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-      ),
-      body: Padding(
-        padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-        child: _buildForm(),
-      ),
-      bottomNavigationBar: Container(
-        height: 60.0,
-        child: ElevatedButton.icon(
-          icon: Icon(Icons.save),
-          label: Text((_item.id == null) ? "Salvar nova categoria" : "Salvar alterações"),
-          onPressed: _save,
-          style: ButtonStyle(
-            shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-              RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(0.0),
+      body: Scaffold(
+        appBar: AppBar(
+          title: Text(widget.title),
+        ),
+        body: Padding(
+          padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+          child: _buildForm(),
+        ),
+        bottomNavigationBar: Container(
+          height: 60.0,
+          child: ElevatedButton.icon(
+            icon: Icon(Icons.save),
+            label: Text(
+              "Salvar",
+              style: TextStyle(
+                fontSize: 18.0,
+              ),
+            ),
+            onPressed: _save,
+            style: ButtonStyle(
+              shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(0.0),
+                ),
               ),
             ),
           ),

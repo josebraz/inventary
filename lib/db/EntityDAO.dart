@@ -31,6 +31,19 @@ abstract class EntityDAO<T extends BasicEntity> {
     );
   }
 
+  Future<void> updateList(List<T> entities) async {
+    final Database db = await database;
+    Iterable<Future<int>> list = entities.map((entity) {
+      return db.update(
+        tableName,
+        entity.toMap(),
+        where: "id = ?",
+        whereArgs: [entity.id],
+      );
+    });
+    await Future.wait(list);
+  }
+
   Future<void> delete(int id) async {
     final Database db = await database;
     await db.delete(

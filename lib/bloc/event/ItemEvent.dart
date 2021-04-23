@@ -18,6 +18,10 @@ class SearchTextChangedItemEvent extends ItemEvent {
   });
 }
 
+class SearchClearItemEvent extends ItemEvent {
+  SearchClearItemEvent();
+}
+
 class CreateItemEvent extends ItemEvent {
   final ItemEntity item;
   CreateItemEvent(this.item);

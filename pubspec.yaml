@@ -33,6 +33,7 @@ dependencies:
   backdrop: ^0.6.0
   file_picker: ^3.0.1
   flutter_native_splash: ^1.1.7+1
+  flutter_typeahead: ^3.1.1
 
 
   # The following adds the Cupertino Icons font to your application.

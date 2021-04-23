@@ -24,6 +24,8 @@ ThemeData theme = ThemeData(
   fontFamily: 'PTSans',
 );
 
+final GlobalKey<ScaffoldMessengerState> rootScaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+
 class MyApp extends StatelessWidget {
 
   @override
@@ -41,6 +43,7 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Flutter Demo',
         theme: theme,
+        scaffoldMessengerKey: rootScaffoldMessengerKey,
         initialRoute: '/',
         onGenerateRoute: (RouteSettings settings) {
           switch(settings.name) {
@@ -52,6 +55,7 @@ class MyApp extends StatelessWidget {
               final CreateEditItemArgs? args = settings.arguments as CreateEditItemArgs?;
               return MaterialPageRoute(
                 builder: (context) {
+                  rootScaffoldMessengerKey.currentState?.hideCurrentSnackBar();
                   return CreateEditItemScreen(
                     title: args?.item != null ? 'Editar ${args?.item?.name}' : 'Criar item',
                     startItem: args?.item ?? ItemEntity(id: null, isFolder: false, name: "", parent: args?.parentItem?.id ?? -1, rootParent: rootParent(args?.parentItem)),

@@ -16,6 +16,10 @@ class ItemRepository {
     return itemDAO.update(item);
   }
 
+  Future<void> updateList(List<ItemEntity> items) {
+    return itemDAO.updateList(items);
+  }
+
   Future<void> delete(int id) {
     return itemDAO.delete(id);
   }
@@ -50,8 +54,16 @@ class ItemRepository {
     return itemDAO.listRootFolders();
   }
 
-  Future<List<String>> listFriends() {
-    return itemDAO.listFriends();
+  Future<List<String>> listFriends([String startingWith = ""]) {
+    return itemDAO.listFriends(startingWith);
+  }
+
+  Future<void> loanTo(String loanTo, List<ItemEntity> itemsSelected) {
+    return itemDAO.loanTo(loanTo, itemsSelected);
+  }
+
+  Future<void> noLoanTo(List<ItemEntity> itemsSelected) {
+    return itemDAO.noLoanTo(itemsSelected);
   }
 
 }

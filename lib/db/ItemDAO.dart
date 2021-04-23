@@ -74,17 +74,37 @@ class ItemDAO extends EntityDAO<ItemEntity> {
     });
   }
 
-  Future<List<String>> listFriends() async {
+  Future<List<String>> listFriends([String startingWith = ""]) async {
     final Database db = await database;
     final List<Map<String, dynamic>> maps = await db.query(
       tableName,
       distinct: true,
       columns: ["loan"],
-      where: "loan IS NOT NULL AND loan != ''",
+      where: "loan IS NOT NULL AND loan != '' AND loan LIKE ? COLLATE NOCASE",
+      whereArgs: ['%$startingWith'],
+      orderBy: "name",
     );
     return List.generate(maps.length, (i) {
       return maps[i]["loan"];
     });
+  }
+
+  Future<void> loanTo(String loanTo, List<ItemEntity> itemsSelected) async {
+    final Database db = await database;
+    await db.update(
+        tableName,
+        { "loan": loanTo },
+        where: "id IN (${itemsSelected.map((e) => e.id).join(',')})",
+    );
+  }
+
+  Future<void> noLoanTo(List<ItemEntity> itemsSelected) async {
+    final Database db = await database;
+    await db.update(
+      tableName,
+      { "loan": "" },
+      where: "id IN (${itemsSelected.map((e) => e.id).join(',')})",
+    );
   }
 
 }

@@ -116,4 +116,31 @@ class ItemBloc extends Bloc<ItemEvent, ItemState> {
     }
   }
 
+  Future<void> updateList(List<ItemEntity> items) async {
+    try {
+      await itemRepository.updateList(items);
+      add(RefreshItemEvent());
+    } catch(e) {
+      print("Error update item $items");
+    }
+  }
+
+  Future<void> loanTo(String loanTo, List<ItemEntity> list) async {
+    try {
+      await itemRepository.loanTo(loanTo, list);
+      add(RefreshItemEvent());
+    } catch(e) {
+      print("Error loan item to $loanTo");
+    }
+  }
+
+  Future<void> noLoanTo(List<ItemEntity> list) async {
+    try {
+      await itemRepository.noLoanTo(list);
+      add(RefreshItemEvent());
+    } catch(e) {
+      print("Error no loan item to $loanTo");
+    }
+  }
+
 }

@@ -6,6 +6,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:inventary/bloc/ItemBloc.dart';
 import 'package:inventary/bloc/event/ItemEvent.dart';
 import 'package:inventary/bloc/state/ItemState.dart';
@@ -112,6 +113,14 @@ class _ItemsListScreenState extends State<ItemsListScreen> {
           value: 'Move',
         ),
         PopupMenuItem<String>(
+          child: const Text('Marcar como emprestado'),
+          value: 'Mark_loan',
+        ),     
+        PopupMenuItem<String>(
+          child: const Text('Marcar como devolvido'),
+          value: 'Mark_no_loan',
+        ),
+        PopupMenuItem<String>(
           child: const Text(
             'Deletar',
             style: TextStyle(
@@ -122,7 +131,7 @@ class _ItemsListScreenState extends State<ItemsListScreen> {
           value: 'Delete',
         ),
       ],
-      onSelected: (String value) {
+      onSelected: (String value) async {
         if (value == 'Delete') {
           setState(() {
             _itemsSelected.forEach((element) {
@@ -134,7 +143,95 @@ class _ItemsListScreenState extends State<ItemsListScreen> {
           setState(() {
             _selectingFolderToMoveItems = true;
           });
+        } else if (value == 'Mark_loan') {
+          await _showLoanTextField();
+          setState(() {
+            _itemsSelected.clear();
+          });
+        } else if (value == 'Mark_no_loan') {
+          await _markNoLoan();
+          setState(() {
+            _itemsSelected.clear();
+          });
         }
+      },
+    );
+  }
+
+  Future<void> _showLoanTextField({ItemEntity? item}) async {
+    final controller = TextEditingController();
+    String? loanTo = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Informe um contato'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(controller.text);
+              },
+              child: Text("Emprestar"),
+            ),
+          ],
+          insetPadding: EdgeInsets.all(10),
+          content: Container(
+            width: double.infinity,
+            child: TypeAheadField<String>(
+              textFieldConfiguration: TextFieldConfiguration(
+                autofocus: true,
+                decoration: const InputDecoration(
+                  icon: Icon(Icons.supervised_user_circle_sharp),
+                  hintText: "Quem está com esses itens?",
+                ),
+                controller: controller,
+                keyboardType: TextInputType.text,
+              ),
+              suggestionsCallback: (pattern) async {
+                return await BlocProvider.of<ItemBloc>(context).itemRepository.listFriends(pattern);
+              },
+              transitionBuilder: (context, suggestionsBox, controller) {
+                return suggestionsBox;
+              },
+              itemBuilder: (context, suggestion) {
+                return ListTile(
+                  title: Text(suggestion),
+                );
+              },
+              onSuggestionSelected: (suggestion) {
+                Navigator.of(context).pop(suggestion);
+              },
+            ),
+          ),
+        );
+      },
+    );
+
+    print("Loan $loanTo");
+    if (loanTo != null) {
+      await _markLoan(loanTo, item: item);
+    }
+  }
+
+  Future<void> _markLoan(String loanTo, {ItemEntity? item}) async {
+    List<ItemEntity> list = (item != null) ? [item] : _itemsSelected;
+    await itemBloc.loanTo(loanTo, list);
+    showSnack(
+      "Itens emprestados para $loanTo",
+      actionText: "Desfazer",
+      actionClicked: () async {
+        await itemBloc.updateList(list);
+      },
+    );
+  }
+
+  Future<void> _markNoLoan({ItemEntity? item}) async {
+    List<ItemEntity> list = (item != null) ? [item] : _itemsSelected;
+    await itemBloc.noLoanTo(list);
+    showSnack(
+      "Os itens estão de volta :)",
+      actionText: "Desfazer",
+      actionClicked: () async {
+        await itemBloc.updateList(list);
       },
     );
   }
@@ -256,6 +353,14 @@ class _ItemsListScreenState extends State<ItemsListScreen> {
       PopupMenuItem<String>(
         child: const Text('Editar'),
         value: 'Edit',
+      ),      
+      if (item.loan.isEmpty && !item.isFolder) PopupMenuItem<String>(
+        child: const Text('Marcar como emprestado'),
+        value: 'Mark_loan',
+      ),
+      if (item.loan.isNotEmpty && !item.isFolder) PopupMenuItem<String>(
+        child: const Text('Marcar como devolvido'),
+        value: 'Mark_no_loan',
       ),
       PopupMenuItem<String>(
         child: const Text(
@@ -407,6 +512,10 @@ class _ItemsListScreenState extends State<ItemsListScreen> {
       _delete(item);
     } else if (value == 'Edit') {
       _edit(item);
+    } else if (value == 'Mark_loan') {
+      _showLoanTextField(item: item);
+    } else if (value == 'Mark_no_loan') {
+      _markNoLoan(item: item);
     }
   }
 

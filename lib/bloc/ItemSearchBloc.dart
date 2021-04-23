@@ -29,6 +29,8 @@ class ItemSearchBloc extends Bloc<ItemEvent, ItemState> {
           friendsFilter: event.friendsFilter,
           folderFilter: event.folderFilter,
         );
+      } else if (event is SearchClearItemEvent) {
+        items = [];
       }
       if (items.length == 0) {
         yield ItemEmptyState();

@@ -47,6 +47,8 @@ class NewItemSearchScreenState extends State<NewItemSearchScreen> {
 
     _folderList = itemSearchBloc.itemRepository.listRootFolders();
     _friendsList = itemSearchBloc.itemRepository.listFriends();
+
+    BlocProvider.of<ItemSearchBloc>(context).add(SearchClearItemEvent());
   }
 
   @override
