@@ -10,11 +10,13 @@ import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:inventary/bloc/ItemBloc.dart';
 import 'package:inventary/bloc/event/ItemEvent.dart';
 import 'package:inventary/bloc/state/ItemState.dart';
+import 'package:inventary/extensions/Utils.dart';
 import 'package:inventary/model/ItemEntity.dart';
 import 'package:inventary/extensions/StateExtension.dart';
 import 'package:inventary/extensions/StringExtension.dart';
 import 'package:inventary/view/CreateEditFolderScreen.dart';
 import 'package:inventary/view/CreateEditItemScreen.dart';
+import 'package:logging/logging.dart';
 
 class ItemsListScreen extends StatefulWidget {
   ItemsListScreen({Key? key}) : super(key: key);
@@ -29,6 +31,8 @@ class _ItemsListScreenState extends State<ItemsListScreen> {
   late ItemEntity _currentParent;
   late List<ItemEntity> _itemsSelected;
   late bool _selectingFolderToMoveItems;
+
+  final _log = Logger('ItemsListScreen');
 
   @override
   void initState() {
@@ -69,6 +73,13 @@ class _ItemsListScreenState extends State<ItemsListScreen> {
           actions: <Widget>[
             if (_itemsSelected.isEmpty) _buildNoSelectionAppBarActions(),
             if (_itemsSelected.isNotEmpty) _buildSelectionAppBarActions(),
+            IconButton(
+              icon: Icon(Icons.alternate_email_sharp),
+              tooltip: "Enviar Estatísticas",
+              onPressed: () {
+                Utils.sendStatistics();
+              }
+            ),
           ],
         ),
         body: BlocBuilder<ItemBloc, ItemState>(
@@ -206,13 +217,13 @@ class _ItemsListScreenState extends State<ItemsListScreen> {
       },
     );
 
-    print("Loan $loanTo");
     if (loanTo != null) {
       await _markLoan(loanTo, item: item);
     }
   }
 
   Future<void> _markLoan(String loanTo, {ItemEntity? item}) async {
+    _log.info("Item List markLoan loanTo $loanTo item $item");
     List<ItemEntity> list = (item != null) ? [item] : _itemsSelected;
     await itemBloc.loanTo(loanTo, list);
     showSnack(
@@ -488,6 +499,8 @@ class _ItemsListScreenState extends State<ItemsListScreen> {
 
   // listeners
   Future<bool> _onBackPressed() async {
+    _log.info("Item List onBackPressed currentPath $_currentParent");
+
     bool finishApp = _parentPath.length == 1 && _itemsSelected.isEmpty;
     if (_selectingFolderToMoveItems) {
       setState(() {
@@ -508,6 +521,7 @@ class _ItemsListScreenState extends State<ItemsListScreen> {
   }
 
   void _onItemOptionSelected(ItemEntity item, String value) {
+    _log.info("Item List onItemOptionSelected item $item value $value");
     if (value == 'Delete') {
       _delete(item);
     } else if (value == 'Edit') {
@@ -576,6 +590,8 @@ class _ItemsListScreenState extends State<ItemsListScreen> {
       ItemEntity? pParentFolder,
       List<ItemEntity> children,
     ) async {
+    _log.info("Item List showFolderNotEmptyAlert folder $folder pParentFolder $pParentFolder children $children");
+
     var parentFolder = pParentFolder ?? ItemEntity.root();
     String message = "A categoria ${folder.name} contém alguns itens como "
         "${children.take(3).map((e) => e.name).join(", ")}. "
@@ -610,6 +626,7 @@ class _ItemsListScreenState extends State<ItemsListScreen> {
   }
 
   Future<void> _deleteFolder(ItemEntity folder) async {
+    _log.info("Item List deleteFolder folder $folder");
     try {
       ItemEntity? parentFolder = (_parentPath.isEmpty || folder.parent == -1)
           ? null
@@ -650,6 +667,7 @@ class _ItemsListScreenState extends State<ItemsListScreen> {
   }
 
   Future<void> _moveSelectedItems() async {
+    _log.info("Item List moveSelectedItems itemsSelected $_itemsSelected");
     await _moveItems(_currentParent.id!);
     setState(() {
       _selectingFolderToMoveItems = false;
@@ -664,6 +682,7 @@ class _ItemsListScreenState extends State<ItemsListScreen> {
   }
 
   void _changeFolder(ItemEntity newParent) {
+    _log.info("Item List changeFolder currentParent $_currentParent newParent $newParent");
     if (!_parentPath.any((element) => element.id == newParent.id)) {
       _updateHeader(_currentParent.id);
       _parentPath.add(newParent);
