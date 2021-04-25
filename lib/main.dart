@@ -14,6 +14,7 @@ import 'package:inventary/view/CreateEditItemScreen.dart';
 import 'package:inventary/view/EditPictureScreen.dart';
 import 'package:inventary/view/ItemsListScreen.dart';
 import 'package:inventary/view/NewItemSearchScreen.dart';
+import 'package:inventary/view/StartOnboarding.dart';
 import 'package:inventary/view/TakePictureScreen.dart';
 import 'package:logging/logging.dart';
 
@@ -125,6 +126,13 @@ class MyAppState extends State<MyApp> {
                   _log.info("Navegando para Pesquisa");
                   return NewItemSearchScreen();
                 }
+              );
+            case '/startsearch':
+              return MaterialPageRoute(
+                  builder: (context) {
+                    _log.info("Navegando para o Onboarding inicial");
+                    return StartOnboarding();
+                  }
               );
             default:
               return null;

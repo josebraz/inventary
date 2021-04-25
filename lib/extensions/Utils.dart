@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:device_info/device_info.dart';
 import 'package:flutter_email_sender/flutter_email_sender.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Utils {
 
@@ -37,5 +38,16 @@ class Utils {
     );
 
     await FlutterEmailSender.send(email);
+  }
+
+  static Future<bool> isFreshInstall() async {
+    // SharedPreferences prefs = await SharedPreferences.getInstance();
+    // return prefs.getBool('freshInstall') ?? true;
+    return true;
+  }
+
+  static Future<void> setFreshInstall() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('freshInstall', false);
   }
 }

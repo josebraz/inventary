@@ -31,6 +31,7 @@ class _ItemsListScreenState extends State<ItemsListScreen> {
   late ItemEntity _currentParent;
   late List<ItemEntity> _itemsSelected;
   late bool _selectingFolderToMoveItems;
+  late Future<bool> _isFreshInstall;
 
   final _log = Logger('ItemsListScreen');
 
@@ -42,8 +43,16 @@ class _ItemsListScreenState extends State<ItemsListScreen> {
     _currentParent = _parentPath.first;
     _itemsSelected = [];
     _selectingFolderToMoveItems = false;
+    _isFreshInstall = Utils.isFreshInstall();
 
     _changeFolder(_currentParent);
+
+    WidgetsBinding.instance?.addPostFrameCallback((_) async {
+      if (await _isFreshInstall) {
+        Navigator.of(context).pushNamed('/startsearch');
+        Utils.setFreshInstall();
+      }
+    });
   }
 
   String get title {
