@@ -5,6 +5,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:inventary/StatisticsManager.dart';
 import 'package:inventary/bloc/ItemBloc.dart';
@@ -258,21 +259,35 @@ class _ItemsListScreenState extends State<ItemsListScreen> {
 
   Widget? _buildFloatingActionButtons() {
     if (_itemsSelected.isEmpty) {
-      return Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: <Widget>[
-          FloatingActionButton(
-            heroTag: "add_folder",
-            onPressed: _addFolder,
-            tooltip: "Adicionar categoria",
-            child: Icon(Icons.create_new_folder_rounded),
+      return SpeedDial(
+        icon: Icons.add,
+        activeIcon: Icons.close,
+        animatedIconTheme: IconThemeData(size: 28.0),
+        backgroundColor: Colors.blue,
+        visible: true,
+        curve: Curves.bounceInOut,
+        children: [
+          SpeedDialChild(
+            onTap: _addFolder,
+            label: "Adicionar categoria",
+            child: Icon(
+              Icons.create_new_folder_rounded,
+              color: Colors.grey,
+            ),
+            backgroundColor: Colors.white,
+            labelStyle: TextStyle(color: Colors.grey.shade600),
+            labelBackgroundColor: Colors.white,
           ),
-          SizedBox(height: 10),
-          FloatingActionButton(
-            heroTag: "add_item",
-            onPressed: _addItem,
-            tooltip: 'Adicionar Item',
-            child: Icon(Icons.add_rounded),
+          SpeedDialChild(
+            onTap: _addItem,
+            label: "Adicionar item",
+            child: Icon(
+              Icons.add_rounded,
+              color: Colors.grey,
+            ),
+            backgroundColor: Colors.white,
+            labelStyle: TextStyle(color: Colors.grey.shade600),
+            labelBackgroundColor: Colors.white,
           ),
         ],
       );
