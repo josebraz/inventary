@@ -215,7 +215,7 @@ class _CreateEditItemScreenState extends State<CreateEditItemScreen> {
       return Hero(
         tag: "item_picture_${_item.id}",
         child: Image.asset(
-          "assets/images.png",
+          "assets/logo.png",
           fit: BoxFit.fitWidth,
           height: 250,
           width: double.infinity,

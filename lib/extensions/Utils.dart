@@ -41,9 +41,8 @@ class Utils {
   }
 
   static Future<bool> isFreshInstall() async {
-    // SharedPreferences prefs = await SharedPreferences.getInstance();
-    // return prefs.getBool('freshInstall') ?? true;
-    return true;
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('freshInstall') ?? true;
   }
 
   static Future<void> setFreshInstall() async {

@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="br.com.josebraz.inventary">
    <application
-        android:label="inventary"
+        android:label="Inventary"
         android:icon="@mipmap/launcher_icon">
         <activity
             android:name=".MainActivity"
