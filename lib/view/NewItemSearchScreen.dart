@@ -147,7 +147,6 @@ class NewItemSearchScreenState extends State<NewItemSearchScreen> {
   }
 
   Widget _buildListItem(ItemEntity item) {
-    bool isSelected = false;
     return Dismissible(
       direction: DismissDirection.endToStart,
       onDismissed: (direction) {
@@ -177,22 +176,19 @@ class NewItemSearchScreenState extends State<NewItemSearchScreen> {
           title: Text(item.name),
           subtitle: Text(item.description.onEmpty("Sem descrição")),
           onTap: () {
-            if (!isSelected) {
-              if (item.isFolder) {
-                setState(() {
-                  // _changeFolder(item);
-                });
-              } else {
-                _editItem(item);
-              }
+            if (item.isFolder) {
+              setState(() {
+                // _changeFolder(item);
+              });
+            } else {
+              _editItem(item);
             }
           },
-          trailing: PopupMenuButton<String>(
+          trailing: IconButton(
             icon: Icon(Icons.more_vert),
             tooltip: "Opções para o item",
-            itemBuilder: (context) => _buildListItemOptionMenu(item),
-            onSelected: (String value) {
-              _onItemOptionSelected(item, value);
+            onPressed: () {
+              _showItemOptions(context, item);
             },
           ),
         ),
@@ -200,23 +196,55 @@ class NewItemSearchScreenState extends State<NewItemSearchScreen> {
     );
   }
 
-  List<PopupMenuItem<String>> _buildListItemOptionMenu(ItemEntity item) {
-    return <PopupMenuItem<String>>[
-      PopupMenuItem<String>(
-        child: const Text('Editar'),
-        value: 'Edit',
-      ),
-      PopupMenuItem<String>(
-        child: const Text(
-          'Deletar',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.red,
-          ),
-        ),
-        value: 'Delete',
-      ),
-    ];
+  void _showItemOptions(BuildContext context, ItemEntity item) {
+    showModalBottomSheet(
+        context: context,
+        builder: (BuildContext bc) {
+          return Container(
+            child: new Wrap(
+              children: <Widget>[
+                ListTile(
+                    leading: Icon(Icons.edit),
+                    title: Text('Editar'),
+                    onTap: () {
+                      _onItemOptionSelected(item, 'Edit');
+                    }
+                ),
+                if (item.loan.isEmpty && !item.isFolder) ListTile(
+                  leading: Icon(Icons.arrow_forward_outlined),
+                  title: Text('Marcar como emprestado'),
+                  onTap: () {
+                    _onItemOptionSelected(item, 'Mark_loan');
+                  },
+                ),
+                if (item.loan.isNotEmpty && !item.isFolder) ListTile(
+                  leading: Icon(Icons.arrow_back_outlined),
+                  title: Text('Marcar como devolvido'),
+                  onTap: () {
+                    _onItemOptionSelected(item, 'Mark_no_loan');
+                  },
+                ),
+                ListTile(
+                    leading: Icon(
+                      Icons.delete,
+                      color: Colors.red,
+                    ),
+                    title: Text(
+                      'Deletar',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.red,
+                      ),
+                    ),
+                    onTap: () {
+                      _onItemOptionSelected(item, 'Delete');
+                    }
+                ),
+              ],
+            ),
+          );
+        }
+    );
   }
 
   Widget _buildNoItems() {

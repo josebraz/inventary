@@ -122,57 +122,72 @@ class _ItemsListScreenState extends State<ItemsListScreen> {
   }
 
   Widget _buildSelectionAppBarActions() {
-    return PopupMenuButton<String>(
+    return IconButton(
       icon: Icon(Icons.more_vert),
       tooltip: "Mais opções para os itens selecionados",
-      itemBuilder: (context) => <PopupMenuItem<String>>[
-        PopupMenuItem<String>(
-          child: const Text('Mover'),
-          value: 'Move',
-        ),
-        PopupMenuItem<String>(
-          child: const Text('Marcar como emprestado'),
-          value: 'Mark_loan',
-        ),     
-        PopupMenuItem<String>(
-          child: const Text('Marcar como devolvido'),
-          value: 'Mark_no_loan',
-        ),
-        PopupMenuItem<String>(
-          child: const Text(
-            'Deletar',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Colors.red,
-            ),
-          ),
-          value: 'Delete',
-        ),
-      ],
-      onSelected: (String value) async {
-        if (value == 'Delete') {
-          setState(() {
-            _itemsSelected.forEach((element) {
-              _onItemOptionSelected(element, "Delete");
-            });
-            _itemsSelected.clear();
-          });
-        } else if (value == 'Move') {
-          setState(() {
-            _selectingFolderToMoveItems = true;
-          });
-        } else if (value == 'Mark_loan') {
-          await _showLoanTextField();
-          setState(() {
-            _itemsSelected.clear();
-          });
-        } else if (value == 'Mark_no_loan') {
-          await _markNoLoan();
-          setState(() {
-            _itemsSelected.clear();
-          });
-        }
-      },
+      onPressed: () {
+        showModalBottomSheet(
+            context: context,
+            builder: (BuildContext bc) {
+              return Container(
+                child: new Wrap(
+                  children: <Widget>[
+                    ListTile(
+                      leading: Icon(Icons.drive_file_move),
+                      title: Text('Mover'),
+                      onTap: () {
+                        setState(() {
+                          _selectingFolderToMoveItems = true;
+                        });
+                      },
+                    ),
+                    ListTile(
+                      leading: Icon(Icons.arrow_forward_outlined),
+                      title: Text('Marcar como emprestado'),
+                      onTap: () async {
+                        await _showLoanTextField();
+                        setState(() {
+                          _itemsSelected.clear();
+                        });
+                      },
+                    ),
+                    ListTile(
+                      leading: Icon(Icons.arrow_back_outlined),
+                      title: Text('Marcar como devolvido'),
+                      onTap: () async {
+                        await _markNoLoan();
+                        setState(() {
+                          _itemsSelected.clear();
+                        });
+                      },
+                    ),
+                    ListTile(
+                        leading: Icon(
+                          Icons.delete,
+                          color: Colors.red,
+                        ),
+                        title: Text(
+                          'Deletar',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.red,
+                          ),
+                        ),
+                        onTap: () {
+                          setState(() {
+                            _itemsSelected.forEach((element) {
+                              _onItemOptionSelected(element, "Delete");
+                            });
+                            _itemsSelected.clear();
+                          });
+                        }
+                    ),
+                  ],
+                ),
+              );
+            }
+        );
+      }
     );
   }
 
@@ -408,12 +423,11 @@ class _ItemsListScreenState extends State<ItemsListScreen> {
               }
             });
           },
-          trailing: (isSelected) ? Icon(Icons.check) : PopupMenuButton<String>(
+          trailing: (isSelected) ? Icon(Icons.check) : IconButton(
             icon: Icon(Icons.more_vert),
             tooltip: "Opções para o item",
-            itemBuilder: (context) => _buildListItemOptionMenu(item),
-            onSelected: (String value) {
-              _onItemOptionSelected(item, value);
+            onPressed: () {
+              _showItemOptions(context, item);
             },
           ),
         ),
@@ -421,31 +435,55 @@ class _ItemsListScreenState extends State<ItemsListScreen> {
     );
   }
 
-  List<PopupMenuItem<String>> _buildListItemOptionMenu(ItemEntity item) {
-    return <PopupMenuItem<String>>[
-      PopupMenuItem<String>(
-        child: const Text('Editar'),
-        value: 'Edit',
-      ),      
-      if (item.loan.isEmpty && !item.isFolder) PopupMenuItem<String>(
-        child: const Text('Marcar como emprestado'),
-        value: 'Mark_loan',
-      ),
-      if (item.loan.isNotEmpty && !item.isFolder) PopupMenuItem<String>(
-        child: const Text('Marcar como devolvido'),
-        value: 'Mark_no_loan',
-      ),
-      PopupMenuItem<String>(
-        child: const Text(
-          'Deletar',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.red,
+  void _showItemOptions(BuildContext context, ItemEntity item) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext bc) {
+        return Container(
+          child: new Wrap(
+            children: <Widget>[
+              ListTile(
+                  leading: Icon(Icons.edit),
+                  title: Text('Editar'),
+                  onTap: () {
+                    _onItemOptionSelected(item, 'Edit');
+                  }
+              ),
+              if (item.loan.isEmpty && !item.isFolder) ListTile(
+                leading: Icon(Icons.arrow_forward_outlined),
+                title: Text('Marcar como emprestado'),
+                onTap: () {
+                  _onItemOptionSelected(item, 'Mark_loan');
+                },
+              ),
+              if (item.loan.isNotEmpty && !item.isFolder) ListTile(
+                leading: Icon(Icons.arrow_back_outlined),
+                title: Text('Marcar como devolvido'),
+                onTap: () {
+                  _onItemOptionSelected(item, 'Mark_no_loan');
+                },
+              ),
+              ListTile(
+                  leading: Icon(
+                    Icons.delete,
+                    color: Colors.red,
+                  ),
+                  title: Text(
+                    'Deletar',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.red,
+                    ),
+                  ),
+                  onTap: () {
+                    _onItemOptionSelected(item, 'Delete');
+                  }
+              ),
+            ],
           ),
-        ),
-        value: 'Delete',
-      ),
-    ];
+        );
+      }
+    );
   }
 
   Widget _buildNoItems() {
@@ -515,20 +553,7 @@ class _ItemsListScreenState extends State<ItemsListScreen> {
               ),
               onLongPressEnd: (LongPressEndDetails details) {
                 if (parent.isRoot) return;
-                showMenu<String>(
-                  context: context,
-                  position: RelativeRect.fromLTRB(
-                      details.globalPosition.dx,
-                      details.globalPosition.dy,
-                      details.globalPosition.dx,
-                      details.globalPosition.dy
-                  ),
-                  items: _buildListItemOptionMenu(parent),
-                ).then((String? value) {
-                  if (value != null) {
-                    _onItemOptionSelected(parent, value);
-                  }
-                });
+                _showItemOptions(context, parent);
               },
             )
           )
