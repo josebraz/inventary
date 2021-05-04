@@ -33,74 +33,82 @@ class EditPictureScreenState extends State<EditPictureScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
-      extendBodyBehindAppBar: true,
-      body: FutureBuilder<bool>(
-        future: _permissionsGranted,
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.requireData) {
-            return Expanded(
+    return FutureBuilder<bool>(
+      future: _permissionsGranted,
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || !snapshot.requireData) {
+          return Scaffold(
+            backgroundColor: Colors.white,
+            appBar: AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+            ),
+            extendBodyBehindAppBar: true,
+            body: (!snapshot.hasData)
+                ? Center(child: CircularProgressIndicator())
+                : Center(
+                    child: Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            "Permissões não garantidas",
+                            style: TextStyle(
+                              fontSize: 17.0,
+                            ),
+                          ),
+                          SizedBox(
+                            height: 20.0,
+                          ),
+                          ElevatedButton(
+                              onPressed: () {
+                                Navigator.of(context).pop(widget.imagePath);
+                              },
+                              child: Text(
+                                "Voltar",
+                                style: TextStyle(
+                                  fontSize: 17.0,
+                                ),
+                              )
+                          )
+                        ],
+                      ),
+                    ),
+                  )
+
+          );
+        } else {
+          return Scaffold(
+            backgroundColor: Colors.transparent,
+            appBar: AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+            ),
+            extendBodyBehindAppBar: true,
+            body: Expanded(
               child: Crop.file(
                 File(widget.imagePath),
                 key: cropKey,
               ),
-            );
-          } else {
-            return Center(
-              child: Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      "Permissões não garantidas",
-                      style: TextStyle(
-                        fontSize: 17.0,
-                      ),
+            ),
+            bottomNavigationBar: Container(
+              height: 60.0,
+              child: ElevatedButton.icon(
+                icon: Icon(Icons.crop),
+                label: Text("Cortar foto"),
+                onPressed: _cropImage,
+                style: ButtonStyle(
+                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                    RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(0.0),
                     ),
-                    SizedBox(
-                      height: 20.0,
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.of(context).pop(widget.imagePath);
-                      },
-                      child: Text(
-                        "Voltar",
-                        style: TextStyle(
-                          fontSize: 17.0,
-                        ),
-                      )
-                    )
-                  ],
+                  ),
                 ),
               ),
-            );
-          }
-        }
-      ),
-      bottomNavigationBar: Container(
-        height: 60.0,
-        child: ElevatedButton.icon(
-          icon: Icon(Icons.crop),
-          label: Text("Cortar foto"),
-          onPressed: _cropImage,
-          style: ButtonStyle(
-            shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-              RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(0.0),
-              ),
             ),
-          ),
-        ),
-      ),
+          );
+        }
+      }
     );
   }
 

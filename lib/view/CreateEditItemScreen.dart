@@ -234,7 +234,7 @@ class _CreateEditItemScreenState extends State<CreateEditItemScreen> {
     }
   }
 
-  void _takePicture() async {
+  Future<void> _takePicture() async {
     var imagePath = await Navigator.of(context).pushNamed('/takepicture') as String?;
     if (imagePath != null) {
       setState(() {
@@ -243,7 +243,7 @@ class _CreateEditItemScreenState extends State<CreateEditItemScreen> {
     }
   }
 
-  void _selectFile() async {
+  Future<void> _selectFile() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['jpg', 'png', 'gif'],
@@ -265,12 +265,18 @@ class _CreateEditItemScreenState extends State<CreateEditItemScreen> {
               new ListTile(
                   leading: new Icon(Icons.file_upload),
                   title: new Text('Selecionar arquivo'),
-                  onTap: _selectFile
+                  onTap: () async {
+                    await _selectFile();
+                    Navigator.pop(context);
+                  }
               ),
               new ListTile(
                 leading: new Icon(Icons.camera_alt_rounded),
                 title: new Text('Tirar foto'),
-                onTap: _takePicture,
+                onTap: () async {
+                  await _takePicture();
+                  Navigator.pop(context);
+                }
               ),
             ],
           ),
