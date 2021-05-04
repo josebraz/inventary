@@ -8,7 +8,7 @@ class EditPictureScreen extends StatefulWidget {
 
   final imagePath;
 
-  const EditPictureScreen(this.imagePath, {Key? key}) : super(key: key);
+  EditPictureScreen(this.imagePath, {Key? key}) : super(key: key);
 
   @override
   EditPictureScreenState createState() => EditPictureScreenState();
@@ -18,9 +18,12 @@ class EditPictureScreenState extends State<EditPictureScreen> {
 
   final cropKey = GlobalKey<CropState>();
 
+  late Future<bool> _permissionsGranted;
+
   @override
   void initState() {
     super.initState();
+    _permissionsGranted = ImageCrop.requestPermissions();
   }
 
   @override
@@ -31,17 +34,57 @@ class EditPictureScreenState extends State<EditPictureScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
       extendBodyBehindAppBar: true,
-      body: Expanded(
-        child: Crop.file(
-          File(widget.imagePath),
-          key: cropKey,
-        ),
+      body: FutureBuilder<bool>(
+        future: _permissionsGranted,
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.requireData) {
+            return Expanded(
+              child: Crop.file(
+                File(widget.imagePath),
+                key: cropKey,
+              ),
+            );
+          } else {
+            return Center(
+              child: Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "Permissões não garantidas",
+                      style: TextStyle(
+                        fontSize: 17.0,
+                      ),
+                    ),
+                    SizedBox(
+                      height: 20.0,
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(context).pop(widget.imagePath);
+                      },
+                      child: Text(
+                        "Voltar",
+                        style: TextStyle(
+                          fontSize: 17.0,
+                        ),
+                      )
+                    )
+                  ],
+                ),
+              ),
+            );
+          }
+        }
       ),
       bottomNavigationBar: Container(
         height: 60.0,
