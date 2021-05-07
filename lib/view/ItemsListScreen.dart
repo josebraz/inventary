@@ -46,8 +46,16 @@ class _ItemsListScreenState extends State<ItemsListScreen> {
 
     WidgetsBinding.instance?.addPostFrameCallback((_) async {
       if (await _isFreshInstall) {
-        Navigator.of(context).pushNamed('/startsearch');
+        await Navigator.of(context).pushNamed('/startsearch');
         Utils.setFreshInstall();
+      }
+      final localEmail = await Utils.getUserEmail();
+      if (localEmail == null) { // precisa pegar o email do usuário
+        final newEmail = await _showEmailQuestion();
+        if (newEmail != null) {
+          StatisticsManager().analytics.setUserProperty(name: "email", value: newEmail);
+          Utils.setUserEmail(newEmail);
+        }
       }
     });
   }
@@ -271,6 +279,39 @@ class _ItemsListScreenState extends State<ItemsListScreen> {
     } else {
       return null;
     }
+  }
+
+  Future<String?> _showEmailQuestion() async {
+    final controller = TextEditingController();
+    return showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Informe seu e-mail'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(controller.text);
+              },
+              child: Text("OK"),
+            ),
+          ],
+          insetPadding: EdgeInsets.all(5),
+          content: Container(
+            width: double.infinity,
+            child: TextField(
+              controller: controller,
+              autofocus: true,
+              keyboardType: TextInputType.emailAddress,
+              decoration: InputDecoration(
+                hintText: "exemplo@gmail.com",
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Widget _buildList(BuildContext context, ItemState state) {

@@ -26,4 +26,14 @@ class Utils {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setBool('freshInstall', false);
   }
+
+  static Future<String?> getUserEmail() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString('email');
+  }
+
+  static Future<void> setUserEmail(String email) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('email', email);
+  }
 }

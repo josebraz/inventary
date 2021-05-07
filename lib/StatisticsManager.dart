@@ -25,6 +25,10 @@ class StatisticsManager {
 
   void setProperties() async {
     analytics.setUserProperty(name: "device_id", value: await Utils.getDeviceId());
+    final email = await Utils.getUserEmail();
+    if (email != null) {
+      analytics.setUserProperty(name: "email", value: email);
+    }
   }
 
 
