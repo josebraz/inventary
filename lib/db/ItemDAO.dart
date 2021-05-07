@@ -1,14 +1,11 @@
 
 
 import 'package:inventary/model/ItemEntity.dart';
-import 'package:logging/logging.dart';
 import 'package:sqflite/sqflite.dart';
 
 import 'EntityDAO.dart';
 
 class ItemDAO extends EntityDAO<ItemEntity> {
-
-  final _log = Logger('ItemDAO');
   
   ItemDAO(Future<Database> database) : super("item", database);
 
@@ -23,7 +20,6 @@ class ItemDAO extends EntityDAO<ItemEntity> {
     required List<String> friendsFilter,
     required List<int> folderFilter,
   }) async {
-    _log.info("Start search - nameFilter $nameFilter nameFilterAsc $nameFilterAsc friendsFilter $friendsFilter folderFilter $folderFilter");
     final Database db = await database;
     final List<Map<String, dynamic>> maps = await db.query(
         tableName,
@@ -39,7 +35,6 @@ class ItemDAO extends EntityDAO<ItemEntity> {
   }
 
   Future<List<ItemEntity>> list([int parent = -1]) async {
-    _log.info("Start list - parent $parent");
     final Database db = await database;
     final List<Map<String, dynamic>> maps = await db.query(tableName, where: "parent = ?", whereArgs: [parent]);
     return List.generate(maps.length, (i) {
@@ -48,7 +43,6 @@ class ItemDAO extends EntityDAO<ItemEntity> {
   }
 
   Future<void> changeParent(int to, int from) async {
-    _log.info("Start changeParent - to $to from $from");
     final Database db = await database;
     await db.update(
       tableName,
@@ -59,7 +53,6 @@ class ItemDAO extends EntityDAO<ItemEntity> {
   }
 
   Future<void> move(int id, int newParent) async {
-    _log.info("Start move - id $id newParent $newParent");
     final Database db = await database;
     await db.update(
       tableName,
@@ -70,7 +63,6 @@ class ItemDAO extends EntityDAO<ItemEntity> {
   }
 
   Future<List<ItemEntity>> listRootFolders() async {
-    _log.info("Start listRootFolders");
     final Database db = await database;
     final List<Map<String, dynamic>> maps = await db.query(
       tableName,
@@ -83,7 +75,6 @@ class ItemDAO extends EntityDAO<ItemEntity> {
   }
 
   Future<List<String>> listFriends([String startingWith = ""]) async {
-    _log.info("Start listFriends - startingWith $startingWith");
     final Database db = await database;
     final List<Map<String, dynamic>> maps = await db.query(
       tableName,
@@ -99,7 +90,6 @@ class ItemDAO extends EntityDAO<ItemEntity> {
   }
 
   Future<void> loanTo(String loanTo, List<ItemEntity> itemsSelected) async {
-    _log.info("Start loanTo - loanTo $loanTo itemsSelected $itemsSelected");
     final Database db = await database;
     await db.update(
         tableName,
@@ -109,7 +99,6 @@ class ItemDAO extends EntityDAO<ItemEntity> {
   }
 
   Future<void> noLoanTo(List<ItemEntity> itemsSelected) async {
-    _log.info("Start noLoanTo - itemsSelected $itemsSelected");
     final Database db = await database;
     await db.update(
       tableName,

@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:inventary/StatisticsManager.dart';
 
 class StartOnboarding extends StatefulWidget {
 
@@ -13,6 +14,12 @@ class _StartOnboardingState extends State<StartOnboarding> {
   final _controller = PageController();
 
   int _currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    StatisticsManager().analytics.logTutorialBegin();
+  }
 
   createCircle(int index) {
     return AnimatedContainer(
@@ -78,6 +85,7 @@ class _StartOnboardingState extends State<StartOnboarding> {
                       if (nextPage < data.length) {
                         _controller.jumpToPage(nextPage);
                       } else {
+                        StatisticsManager().analytics.logTutorialComplete();
                         Navigator.of(context).pop();
                       }
                     },

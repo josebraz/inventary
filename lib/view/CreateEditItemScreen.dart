@@ -9,6 +9,8 @@ import 'package:inventary/bloc/ItemBloc.dart';
 import 'package:inventary/model/ItemEntity.dart';
 import 'package:inventary/extensions/StateExtension.dart';
 
+import '../StatisticsManager.dart';
+
 class CreateEditItemArgs {
   final ItemEntity? parentItem;
   final ItemEntity? item;
@@ -191,6 +193,7 @@ class _CreateEditItemScreenState extends State<CreateEditItemScreen> {
                         );
                       },
                       onSuggestionSelected: (suggestion) {
+                        StatisticsManager().analytics.logEvent(name: "loan_suggestion_click_event", parameters: {"suggestion": suggestion});
                         _typeAheadController.text = suggestion;
                       },
                       validator: (String? value) {
@@ -240,6 +243,7 @@ class _CreateEditItemScreenState extends State<CreateEditItemScreen> {
       setState(() {
         _imagesList = [imagePath];
       });
+      StatisticsManager().analytics.logEvent(name: "take_picture_event", parameters: {"file": imagePath});
     }
   }
 
@@ -252,6 +256,7 @@ class _CreateEditItemScreenState extends State<CreateEditItemScreen> {
       setState(() {
         _imagesList = [result.files.single.path];
       });
+      StatisticsManager().analytics.logEvent(name: "select_file_event", parameters: {"file": result.files.single.path});
     }
   }
 
@@ -290,6 +295,7 @@ class _CreateEditItemScreenState extends State<CreateEditItemScreen> {
     if (form.validate()) {
       form.save();
       _item.attachmentsPath = _imagesList;
+      StatisticsManager().analytics.logEvent(name: "save_item_event", parameters: {"item": _item});
       BlocProvider.of<ItemBloc>(context).insert(_item).then((value) {
         showSnack('Item salvo com sucesso');
         Navigator.of(context).pop();

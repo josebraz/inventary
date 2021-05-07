@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
+import 'package:inventary/StatisticsManager.dart';
 import 'package:inventary/bloc/ItemBloc.dart';
 import 'package:inventary/bloc/event/ItemEvent.dart';
 import 'package:inventary/bloc/state/ItemState.dart';
@@ -15,7 +16,6 @@ import 'package:inventary/extensions/StateExtension.dart';
 import 'package:inventary/extensions/StringExtension.dart';
 import 'package:inventary/view/CreateEditFolderScreen.dart';
 import 'package:inventary/view/CreateEditItemScreen.dart';
-import 'package:logging/logging.dart';
 
 class ItemsListScreen extends StatefulWidget {
   ItemsListScreen({Key? key}) : super(key: key);
@@ -31,8 +31,6 @@ class _ItemsListScreenState extends State<ItemsListScreen> {
   late List<ItemEntity> _itemsSelected;
   late bool _selectingFolderToMoveItems;
   late Future<bool> _isFreshInstall;
-
-  final _log = Logger('ItemsListScreen');
 
   @override
   void initState() {
@@ -80,13 +78,6 @@ class _ItemsListScreenState extends State<ItemsListScreen> {
           actions: <Widget>[
             if (_itemsSelected.isEmpty) _buildNoSelectionAppBarActions(),
             if (_itemsSelected.isNotEmpty) _buildSelectionAppBarActions(),
-            IconButton(
-              icon: Icon(Icons.alternate_email_sharp),
-              tooltip: "Enviar Estatísticas",
-              onPressed: () {
-                Utils.sendStatistics();
-              }
-            ),
           ],
         ),
         body: BlocBuilder<ItemBloc, ItemState>(
@@ -230,7 +221,8 @@ class _ItemsListScreenState extends State<ItemsListScreen> {
   }
 
   Future<void> _markLoan(String loanTo, {ItemEntity? item}) async {
-    _log.info("Item List markLoan loanTo $loanTo item $item");
+    StatisticsManager().analytics.logEvent(name: "loan_event", parameters: {"loan_to": loanTo, "item": item});
+
     List<ItemEntity> list = (item != null) ? [item] : _itemsSelected;
     await itemBloc.loanTo(loanTo, list);
     showSnack(
@@ -243,6 +235,8 @@ class _ItemsListScreenState extends State<ItemsListScreen> {
   }
 
   Future<void> _markNoLoan({ItemEntity? item}) async {
+    StatisticsManager().analytics.logEvent(name: "no_loan_event", parameters: {"item": item});
+
     List<ItemEntity> list = (item != null) ? [item] : _itemsSelected;
     await itemBloc.noLoanTo(list);
     showSnack(
@@ -283,6 +277,7 @@ class _ItemsListScreenState extends State<ItemsListScreen> {
     if (state is ItemFetchingState) {
       return Center(child: CircularProgressIndicator());
     } else if (state is ItemFetchedState) {
+      StatisticsManager().analytics.logEvent(name: "fetched_list_event", parameters: {"size": state.items.length});
       return ListView.builder(
         itemCount: state.items.length,
         itemBuilder: (context, i) {
@@ -290,6 +285,7 @@ class _ItemsListScreenState extends State<ItemsListScreen> {
         },
       );
     } else {
+      StatisticsManager().analytics.logEvent(name: "no_item_list_event");
       return _buildNoItems();
     }
   }
@@ -327,10 +323,12 @@ class _ItemsListScreenState extends State<ItemsListScreen> {
           subtitle: Text(item.description.onEmpty("Sem descrição")),
           onTap: () {
             if (isSelected && !_selectingFolderToMoveItems) {
+              StatisticsManager().analytics.logEvent(name: "deselect_item_event", parameters: {"item": item});
               setState(() {
                 _itemsSelected.removeWhere((element) => element.id == item.id);
               });
             } else if (_itemsSelected.isNotEmpty && !_selectingFolderToMoveItems) {
+              StatisticsManager().analytics.logEvent(name: "select_item_event", parameters: {"item": item});
               setState(() {
                 if (!isSelected) {
                   _itemsSelected.add(item);
@@ -349,6 +347,7 @@ class _ItemsListScreenState extends State<ItemsListScreen> {
           onLongPress: () {
             setState(() {
               if (!isSelected) {
+                StatisticsManager().analytics.logEvent(name: "select_item_event", parameters: {"item": item});
                 _itemsSelected.add(item);
               }
             });
@@ -506,15 +505,15 @@ class _ItemsListScreenState extends State<ItemsListScreen> {
 
   // listeners
   Future<bool> _onBackPressed() async {
-    _log.info("Item List onBackPressed currentPath $_currentParent");
-
     bool finishApp = _parentPath.length == 1 && _itemsSelected.isEmpty;
     if (_selectingFolderToMoveItems) {
+      StatisticsManager().analytics.logEvent(name: "cancel_select_folder_to_move_event");
       setState(() {
         _selectingFolderToMoveItems = false;
         _itemsSelected.clear();
       });
     } else if (_itemsSelected.isNotEmpty) {
+      StatisticsManager().analytics.logEvent(name: "clear_selected_items_event");
       setState(() {
         _itemsSelected.clear();
       });
@@ -528,7 +527,6 @@ class _ItemsListScreenState extends State<ItemsListScreen> {
   }
 
   void _onItemOptionSelected(ItemEntity item, String value) {
-    _log.info("Item List onItemOptionSelected item $item value $value");
     if (value == 'Delete') {
       _delete(item);
     } else if (value == 'Edit') {
@@ -569,6 +567,7 @@ class _ItemsListScreenState extends State<ItemsListScreen> {
 
   Future<void> _deleteItem(ItemEntity item) async {
     try {
+      StatisticsManager().analytics.logEvent(name: "delete_item_event", parameters: {"item": item});
       await itemBloc.delete(item);
       showSnack(
         "Item ${item.name} deletado com sucesso",
@@ -597,8 +596,6 @@ class _ItemsListScreenState extends State<ItemsListScreen> {
       ItemEntity? pParentFolder,
       List<ItemEntity> children,
     ) async {
-    _log.info("Item List showFolderNotEmptyAlert folder $folder pParentFolder $pParentFolder children $children");
-
     var parentFolder = pParentFolder ?? ItemEntity.root();
     String message = "A categoria ${folder.name} contém alguns itens como "
         "${children.take(3).map((e) => e.name).join(", ")}. "
@@ -633,7 +630,7 @@ class _ItemsListScreenState extends State<ItemsListScreen> {
   }
 
   Future<void> _deleteFolder(ItemEntity folder) async {
-    _log.info("Item List deleteFolder folder $folder");
+    StatisticsManager().analytics.logEvent(name: "delete_folder_event", parameters: {"folder": folder});
     try {
       ItemEntity? parentFolder = (_parentPath.isEmpty || folder.parent == -1)
           ? null
@@ -644,6 +641,7 @@ class _ItemsListScreenState extends State<ItemsListScreen> {
         int response = await _showFolderNotEmptyAlert(
             folder, parentFolder, children) ?? 0;
         if (response == 1) {
+          StatisticsManager().analytics.logEvent(name: "change_parent_delete_folder_event", parameters: {"parentTo": parentFolder?.id, "parentFrom": folder.id});
           await itemBloc.changeParent(parentFolder?.id ?? -1, folder.id!);
         } else if (response == 2) {
           // TODO: eliminar resíduos de todos os descendentes dessa pasta
@@ -674,7 +672,7 @@ class _ItemsListScreenState extends State<ItemsListScreen> {
   }
 
   Future<void> _moveSelectedItems() async {
-    _log.info("Item List moveSelectedItems itemsSelected $_itemsSelected");
+    StatisticsManager().analytics.logEvent(name: "move_items_event", parameters: {"items": _itemsSelected, "newParent": _currentParent.id});
     await _moveItems(_currentParent.id!);
     setState(() {
       _selectingFolderToMoveItems = false;
@@ -689,7 +687,8 @@ class _ItemsListScreenState extends State<ItemsListScreen> {
   }
 
   void _changeFolder(ItemEntity newParent) {
-    _log.info("Item List changeFolder currentParent $_currentParent newParent $newParent");
+    StatisticsManager().analytics.logEvent(name: "change_folder_list_event", parameters: {"newParent": newParent});
+
     if (!_parentPath.any((element) => element.id == newParent.id)) {
       _updateHeader(_currentParent.id);
       _parentPath.add(newParent);

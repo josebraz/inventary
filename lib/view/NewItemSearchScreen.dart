@@ -2,6 +2,7 @@ import 'package:backdrop/backdrop.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:inventary/StatisticsManager.dart';
 import 'package:inventary/bloc/ItemBloc.dart';
 import 'package:inventary/bloc/ItemSearchBloc.dart';
 import 'package:inventary/bloc/event/ItemEvent.dart';
@@ -344,12 +345,14 @@ class NewItemSearchScreenState extends State<NewItemSearchScreen> {
   }
 
   void _searchQuery() {
-    BlocProvider.of<ItemSearchBloc>(context).add(SearchTextChangedItemEvent(
+    var searchTextChangedItemEvent = SearchTextChangedItemEvent(
       nameFilter: _nameFilter,
       nameFilterAsc: _nameFilterAsc,
       friendsFilter: _markedFriendList,
       folderFilter: _markedFolderList,
-    ));
+    );
+    StatisticsManager().analytics.logEvent(name: "search_event", parameters: {"query": searchTextChangedItemEvent});
+    BlocProvider.of<ItemSearchBloc>(context).add(searchTextChangedItemEvent);
   }
 
   Widget _buildFilters() {
